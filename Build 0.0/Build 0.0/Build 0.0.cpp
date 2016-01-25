@@ -4,19 +4,24 @@
 #include "stdafx.h"
 #include "Build 0.0.h"
 #include "BodyBasics.h" // * Added
-
+#include <thread>
 #define MAX_LOADSTRING 100
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
+HINSTANCE KinectInst;
+int Show;
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
+ATOM				RegisterKinectClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+CBodyBasics kinectApp;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -71,7 +76,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.cbSize = sizeof(WNDCLASSEX);
 
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
+    wcex.lpfnWndProc    = WndProc;// points to window procedure
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
@@ -82,7 +87,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));//***
 
-    return RegisterClassExW(&wcex);
+    return RegisterClassExW(&wcex);// Register the window class.
 }
 
 //
@@ -98,7 +103,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
-
+   Show = nCmdShow; // **
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
@@ -144,7 +149,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 break;
 			case ID_KINECT_RUN:
 				StartKinect(hWnd, message, wParam, lParam);
-
+				
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
@@ -187,15 +192,27 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     }
     return (INT_PTR)FALSE;
 }
+typedef struct KinectVars {
+	HINSTANCE hInst;
+	int nCmdShow = 48;
+
+} Vars, *pVars;
 void StartKinect(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	CBodyBasics kinectApp;
+	HINSTANCE NEWhInstance = (HINSTANCE)GetModuleHandle(NULL);
+	KinectInst = NEWhInstance;
+
+	//kinectApp.Run(hInst, Show);
+	kinectApp.Run(hInst, Show, hDlg);
+//	kinectApp.Run(KinectInst, Show, hDlg);
+//	kinectApp.KMain(KinectInst, Show);
+
+	//std::thread Kinect(StartKinect, hWnd);
 	
+	//HWND hWndKin = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+	//	CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInst, nullptr);
 	
-	HWND hWndKin = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInst, nullptr);
-	
-	kinectApp.Run(hInst, 48 );
+//	kinectApp.Run(hInst, 48 );
 /*	HWND hWndKin = CreateWindowW(
 		_In_opt_ LPCTSTR   lpClassName,
 		_In_opt_ LPCTSTR   lpWindowName,
@@ -209,5 +226,43 @@ void StartKinect(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		_In_opt_ HINSTANCE hInstance,
 		_In_opt_ LPVOID    lpParam
 		);
+
+		hInst = hInstance; // Store instance handle in our global variable
+
+		HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+
+		if (!hWnd)
+		{
+		return FALSE;
+		}
+
+		// CBodyBasics Body1;//***
+		//  Body1.Run(hInstance, nCmdShow);//***
+
+		ShowWindow(hWnd, nCmdShow);
+		UpdateWindow(hWnd);
+
+		return TRUE;
 	*/
 };
+ATOM RegisterKinectClass(HINSTANCE hInstance)
+{
+	WNDCLASSEXW wcex;
+
+	wcex.cbSize = sizeof(WNDCLASSEX);
+
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;// points to window procedure
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hInstance = hInstance;
+	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_BUILD00)); //*** Commented out Build 0.0 Icon to try to fix error "CVTRES : fatal error CVT1100: duplicate resource.  type:ICON, name:1, language:0x0409"
+	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_BUILD00);
+	wcex.lpszClassName = szWindowClass;
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));//***
+
+	return RegisterClassExW(&wcex);// Register the window class.
+}

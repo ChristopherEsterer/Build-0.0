@@ -49,8 +49,8 @@ public:
     /// </summary>
     /// <param name="hInstance"></param>
     /// <param name="nCmdShow"></param>
-    int                     Run(HINSTANCE hInstance, int nCmdShow);
-
+	DWORD                     Run(HINSTANCE hInstance, int nCmdShow , HWND hDlg);
+	int KMain(HINSTANCE hInstance, int nShowCmd);
 private:
     HWND                    m_hWnd;
     INT64                   m_nStartTime;

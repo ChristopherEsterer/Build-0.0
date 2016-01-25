@@ -22,7 +22,7 @@ static const float c_HandSize = 30.0f;
 /// <param name="lpCmdLine">command line arguments</param>
 /// <param name="nCmdShow">whether to display minimized, maximized, or normally</param>
 /// <returns>status</returns>
-/*
+
 int APIENTRY KinectMain(    
 	_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -34,10 +34,18 @@ int APIENTRY KinectMain(
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     CBodyBasics application;
-    application.Run(hInstance, nShowCmd);
+  //  application.Run(hInstance, nShowCmd);
 	return 0;
 }
-//*** */
+int KMain(HINSTANCE hInstance, int nShowCmd)
+{
+
+	CBodyBasics application;
+	HINSTANCE NEWhInstance = (HINSTANCE)GetModuleHandle(NULL);
+//	application.Run(NEWhInstance, nShowCmd);
+	return 0;
+}
+//*** 
 /// <summary>
 /// Constructor
 /// </summary>
@@ -99,7 +107,7 @@ CBodyBasics::~CBodyBasics()
 /// </summary>
 /// <param name="hInstance">handle to the application instance</param>
 /// <param name="nCmdShow">whether to display minimized, maximized, or normally</param>
-int CBodyBasics::Run(HINSTANCE hInstance, int nCmdShow)
+DWORD CBodyBasics::Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg)
 {
     MSG       msg = {0};
     WNDCLASS  wc;
@@ -110,8 +118,8 @@ int CBodyBasics::Run(HINSTANCE hInstance, int nCmdShow)
     wc.cbWndExtra    = DLGWINDOWEXTRA;
     wc.hCursor       = LoadCursorW(NULL, IDC_ARROW);
     wc.hIcon         = LoadIconW(hInstance, MAKEINTRESOURCE(IDI_APP));//***
-	//wc.hIcon = LoadIconW(NULL, NULL);//***
-	//wc.hIcon = LoadIconW(hInstance, nCmdShow);//***
+//	wc.hIcon = LoadIconW(NULL, NULL);//***
+//	wc.hIcon = LoadIconW(hInstance, nCmdShow);//***
     wc.lpfnWndProc   = DefDlgProcW;
     wc.lpszClassName = L"BodyBasicsAppDlgWndClass";
 
@@ -121,13 +129,21 @@ int CBodyBasics::Run(HINSTANCE hInstance, int nCmdShow)
     }
 
     // Create main application window
-    HWND hWndApp = CreateDialogParamW(
+   /* HWND hWndApp = CreateDialogParamW(
         NULL,
         MAKEINTRESOURCE(IDD_APP),
         NULL,
         (DLGPROC)CBodyBasics::MessageRouter, 
-        reinterpret_cast<LPARAM>(this));
+        reinterpret_cast<LPARAM>(this)); */
+	HWND hWndApp = CreateDialogParamW(
+		NULL,
+		MAKEINTRESOURCE(IDD_APP),
+		hDlg,
+		(DLGPROC)CBodyBasics::MessageRouter,
+		reinterpret_cast<LPARAM>(this));
 
+
+	DWORD TEMPE = GetLastError();
     // Show window
     ShowWindow(hWndApp, nCmdShow);
 
