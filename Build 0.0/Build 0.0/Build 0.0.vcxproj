@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="BodyBasics.h" />
     <ClInclude Include="Build 0.0.h" />
+    <ClInclude Include="OptiBody.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="resourcek.h" />
     <ClInclude Include="stdafx.h" />
@@ -157,6 +158,8 @@
   <ItemGroup>
     <ClCompile Include="BodyBasics.cpp" />
     <ClCompile Include="Build 0.0.cpp" />
+    <ClCompile Include="OptiBody.cpp" />
+    <ClCompile Include="OptiBodyStructs.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

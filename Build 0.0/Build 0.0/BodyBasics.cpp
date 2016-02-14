@@ -8,6 +8,7 @@
 #include <strsafe.h>
 #include "Resource.h"
 #include "BodyBasics.h"
+#include "OptiBody.h"
 
 static const float c_JointThickness = 3.0f;
 static const float c_TrackedBoneThickness = 6.0f;
@@ -23,6 +24,8 @@ static const float c_HandSize = 30.0f;
 /// <param name="nCmdShow">whether to display minimized, maximized, or normally</param>
 /// <returns>status</returns>
 
+OptiBody UserBody;
+
 int APIENTRY KinectMain(    
 	_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -32,7 +35,7 @@ int APIENTRY KinectMain(
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
-
+	
     CBodyBasics application;
   //  application.Run(hInstance, nShowCmd);
 	return 0;
@@ -299,6 +302,8 @@ HRESULT CBodyBasics::InitializeDefaultSensor()
     {
         // Initialize the Kinect and get coordinate mapper and the body reader
         IBodyFrameSource* pBodyFrameSource = NULL;
+		//OptiBody* InitBody = new OptiBody;
+		//OBody = InitBody;
 
         hr = m_pKinectSensor->Open();
 
@@ -379,12 +384,13 @@ void CBodyBasics::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                             {
 								//saveJointSpace(joints[i]);
 								//saveJointSpace(Type, X, Y, Z, State, Delta T);
-								//saveJointSpace(joints[i].JointType, joints[i].X, joints[i].Y, joints[i].Z, joints[i].TrackingState);
+							//	UserBody.saveJointSpace((int)joints[i].JointType,(float) joints[i].Position.X ,(float) joints[i].Position.Y,(float) joints[i].Position.Z, (int) joints[i].TrackingState);
                                 jointPoints[j] = BodyToScreen(joints[j].Position, width, height);
                             }
 
                             DrawBody(joints, jointPoints); //* Draw the joints
-
+							SaveBody(joints, jointPoints); //*** New
+							AnalyseBody(joints, jointPoints); //*** New
                             DrawHand(leftHandState, jointPoints[JointType_HandLeft]); //* Draw the Left Hand
                             DrawHand(rightHandState, jointPoints[JointType_HandRight]); //* Draw the Right Hand
                         }
@@ -597,7 +603,151 @@ void CBodyBasics::DrawBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoin
         }
     }
 }
+//
+// *** Added FUNCTIONS ***
+//
+void CBodyBasics::SaveBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints)
+{ //*** Needs work, Like not even started
+	// Draw the bones
+	
+	// Torso
+	ComputeJointVector(pJoints, pJointPoints, JointType_Head, JointType_Neck);
+	ComputeJointVector(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
+	ComputeJointVector(pJoints, pJointPoints, JointType_SpineShoulder, JointType_SpineMid);
+	ComputeJointVector(pJoints, pJointPoints, JointType_SpineMid, JointType_SpineBase);
+	ComputeJointVector(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderRight);
+	ComputeJointVector(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderLeft);
+	ComputeJointVector(pJoints, pJointPoints, JointType_SpineBase, JointType_HipRight);
+	ComputeJointVector(pJoints, pJointPoints, JointType_SpineBase, JointType_HipLeft);
 
+	// Right Arm    
+	ComputeJointVector(pJoints, pJointPoints, JointType_ShoulderRight, JointType_ElbowRight);
+	ComputeJointVector(pJoints, pJointPoints, JointType_ElbowRight, JointType_WristRight);
+	ComputeJointVector(pJoints, pJointPoints, JointType_WristRight, JointType_HandRight);
+	ComputeJointVector(pJoints, pJointPoints, JointType_HandRight, JointType_HandTipRight);
+	ComputeJointVector(pJoints, pJointPoints, JointType_WristRight, JointType_ThumbRight);
+
+	// Left Arm
+	ComputeJointVector(pJoints, pJointPoints, JointType_ShoulderLeft, JointType_ElbowLeft);
+	ComputeJointVector(pJoints, pJointPoints, JointType_ElbowLeft, JointType_WristLeft);
+	ComputeJointVector(pJoints, pJointPoints, JointType_WristLeft, JointType_HandLeft);
+	ComputeJointVector(pJoints, pJointPoints, JointType_HandLeft, JointType_HandTipLeft);
+	ComputeJointVector(pJoints, pJointPoints, JointType_WristLeft, JointType_ThumbLeft);
+
+	// Right Leg
+	ComputeJointVector(pJoints, pJointPoints, JointType_HipRight, JointType_KneeRight);
+	ComputeJointVector(pJoints, pJointPoints, JointType_KneeRight, JointType_AnkleRight);
+	ComputeJointVector(pJoints, pJointPoints, JointType_AnkleRight, JointType_FootRight);
+
+	// Left Leg
+	ComputeJointVector(pJoints, pJointPoints, JointType_HipLeft, JointType_KneeLeft);
+	ComputeJointVector(pJoints, pJointPoints, JointType_KneeLeft, JointType_AnkleLeft);
+	ComputeJointVector(pJoints, pJointPoints, JointType_AnkleLeft, JointType_FootLeft);
+
+	UserBody.incFrameCounter();
+}
+void CBodyBasics::AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints)
+{
+	// Draw the bones
+
+	// Torso
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_Head, JointType_Neck);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_SpineMid);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineMid, JointType_SpineBase);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderRight);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderLeft);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineBase, JointType_HipRight);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineBase, JointType_HipLeft);
+
+	// Right Arm    
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_ShoulderRight, JointType_ElbowRight);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_ElbowRight, JointType_WristRight);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_WristRight, JointType_HandRight);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_HandRight, JointType_HandTipRight);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_WristRight, JointType_ThumbRight);
+
+	// Left Arm
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_ShoulderLeft, JointType_ElbowLeft);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_ElbowLeft, JointType_WristLeft);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_WristLeft, JointType_HandLeft);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_HandLeft, JointType_HandTipLeft);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_WristLeft, JointType_ThumbLeft);
+
+	// Right Leg
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_HipRight, JointType_KneeRight);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_KneeRight, JointType_AnkleRight);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_AnkleRight, JointType_FootRight);
+
+	// Left Leg
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_HipLeft, JointType_KneeLeft);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_KneeLeft, JointType_AnkleLeft);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_AnkleLeft, JointType_FootLeft);
+
+}
+void CBodyBasics::ComputeJointVector(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1)
+{ // Code from DrawBone()
+	TrackingState joint0State = pJoints[joint0].TrackingState;
+	TrackingState joint1State = pJoints[joint1].TrackingState;
+
+	// If we can't find either of these joints, exit
+	if ((joint0State == TrackingState_NotTracked) || (joint1State == TrackingState_NotTracked))
+	{ // We need to flag this for derivative. so we dont get crazy peak accel
+		return;
+	}
+
+	// Don't draw if both points are inferred
+	if ((joint0State == TrackingState_Inferred) && (joint1State == TrackingState_Inferred))
+	{// We need to flag this for derivative. so we dont get crazy peak accel
+		return;
+	}
+
+	// We assume all drawn bones are inferred unless BOTH joints are tracked
+	if ((joint0State == TrackingState_Tracked) && (joint1State == TrackingState_Tracked))
+	{// Put the Functoin call here // *** ***
+		float Tx = (pJoints[joint0].Position.X) - (pJoints[joint1].Position.X);
+		float Ty = (pJoints[joint0].Position.Y) - (pJoints[joint1].Position.Y);
+		float Tz = (pJoints[joint0].Position.Z) - (pJoints[joint1].Position.Z);
+		UserBody.saveJointVector(joint0, joint1, Tx, Ty, Tz, TrackingState_Tracked);
+	}
+	else
+	{
+		float Tx = (pJoints[joint0].Position.X) - (pJoints[joint1].Position.X);
+		float Ty = (pJoints[joint0].Position.Y) - (pJoints[joint1].Position.Y);
+		float Tz = (pJoints[joint0].Position.Z) - (pJoints[joint1].Position.Z);
+		UserBody.saveJointVector(joint0, joint1, Tx, Ty, Tz, TrackingState_Inferred);
+	}
+}
+void CBodyBasics::ComputeJointDerivative(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1)
+{ // Code from DrawBone()
+	TrackingState joint0State = pJoints[joint0].TrackingState;
+	TrackingState joint1State = pJoints[joint1].TrackingState;
+
+	// If we can't find either of these joints, exit
+	if ((joint0State == TrackingState_NotTracked) || (joint1State == TrackingState_NotTracked))
+	{ // We need to flag this for derivative. so we dont get crazy peak accel
+		return;
+	}
+
+	// Don't draw if both points are inferred
+	if ((joint0State == TrackingState_Inferred) && (joint1State == TrackingState_Inferred))
+	{// We need to flag this for derivative. so we dont get crazy peak accel
+		return;
+	}
+
+	// We assume all drawn bones are inferred unless BOTH joints are tracked
+	if ((joint0State == TrackingState_Tracked) && (joint1State == TrackingState_Tracked))
+	{// Put the Functoin call here // *** ***
+		UserBody.compJointDerivative(joint0, joint1);
+	}
+	else
+	{
+		UserBody.compJointDerivative(joint0, joint1);
+	}
+}
+
+// *** End
+//
 /// <summary>
 /// Draws one bone of a body (joint to joint)
 /// </summary>

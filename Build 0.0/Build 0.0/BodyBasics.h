@@ -79,6 +79,8 @@ private:
     ID2D1SolidColorBrush*   m_pBrushHandOpen;
     ID2D1SolidColorBrush*   m_pBrushHandLasso;
 
+	//OptiBody Class
+	//class OptiBody*			OBody; // ***
     /// <summary>
     /// Main processing function
     /// </summary>
@@ -97,6 +99,7 @@ private:
     /// <param name="ppBodies">body data in frame</param>
     /// </summary>
     void                    ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies);
+	//*** Added code here to save the Body Data.
 
     /// <summary>
     /// Set the status bar message
@@ -132,8 +135,13 @@ private:
     /// <param name="pJoints">joint data</param>
     /// <param name="pJointPoints">joint positions converted to screen space</param>
     void                    DrawBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints);
-
-    /// <summary>
+	// Added Code ***
+	void                    SaveBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints);
+//	void                    LoadBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints);
+	void                    AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints);
+	void					ComputeJointVector(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1);
+	void					ComputeJointDerivative(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1);
+	/// <summary>
     /// Draws a hand symbol if the hand is tracked: red circle = closed, green circle = opened; blue circle = lasso
     /// </summary>
     /// <param name="handState">state of the hand</param>
