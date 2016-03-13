@@ -31,6 +31,15 @@
 
 //** math and data types
 #include <array>
+#include <string>
+#include <algorithm>
+// GUI Class Header
+#include "GUI.h"
+// BodyBasic Class Header
+#include "BodyBasics.h"
+// OptiBody Class Header
+#include "OptiBody.h"
+
 
 
 #pragma comment (lib, "d2d1.lib")

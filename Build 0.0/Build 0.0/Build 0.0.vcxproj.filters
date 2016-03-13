@@ -39,6 +39,9 @@
     <ClInclude Include="OptiBody.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GUI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -56,6 +59,9 @@
     <ClCompile Include="OptiBodyStructs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Build 0.0.rc">
@@ -67,6 +73,21 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Build 0.0.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="app.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Logo.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bitmap1.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="LogoCopy.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="LogoSmall.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

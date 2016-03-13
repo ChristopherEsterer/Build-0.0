@@ -15,12 +15,16 @@ public: // Public functions for BodyBasic.cpp to call
 	//void OptiBody();
 	//Body getBody();
 	//void saveBody(Body B);
-	void saveJointVector(int JointType0, int JointType1, float X, float Y, float Z, int TrackingState);
+	void saveJointVector(int JointType0, int JointType1, float X, float Y, float Z, int TrackingState, double time);
 	void getJointSpace(void);
 	void incFrameCounter(void);
 	void compJointDerivative(int JointType0, int JointType1);
 	~OptiBody();
 	OptiBody();
+	double interval;
+
+	double getJointVectorMapData(int JointType0, int JointType1, int Datatype);
+	double getJointDerivativeMapData(int JointType0, int JointType1, int Datatype);
 private:
 	// Timing Variables
 	HWND                    m_hWnd;
@@ -43,6 +47,7 @@ private:
 			float Y;
 			float Z;
 			float R; // vector lenght
+			double T; // TotalTime
 		}JointVector;
 		std::array<std::array <JointVector, 26>, 26> JointMap; // 26X26 matrix
 	}JointMap;

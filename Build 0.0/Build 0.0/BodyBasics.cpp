@@ -7,8 +7,8 @@
 #include "stdafx.h"
 #include <strsafe.h>
 #include "Resource.h"
-#include "BodyBasics.h"
-#include "OptiBody.h"
+//#include "BodyBasics.h"
+//#include "OptiBody.h"
 
 static const float c_JointThickness = 3.0f;
 static const float c_TrackedBoneThickness = 6.0f;
@@ -168,7 +168,18 @@ DWORD CBodyBasics::Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg)
         }
     }
 
+	// Window is closeing, deregister the class.
+	if (!UnregisterClassW(wc.lpszClassName, wc.hInstance))
+	{
+		return 0;
+	}
+
     return static_cast<int>(msg.wParam);
+}
+
+void* CBodyBasics::GetUserBody(void)
+{
+	return &UserBody;
 }
 
 /// <summary>
@@ -389,8 +400,20 @@ void CBodyBasics::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                             }
 
                             DrawBody(joints, jointPoints); //* Draw the joints
-							SaveBody(joints, jointPoints); //*** New
-							AnalyseBody(joints, jointPoints); //*** New
+							SaveBody(joints, jointPoints, (nTime - m_nStartTime)); //*** New
+								double interval = 0.0;
+								LARGE_INTEGER qpcNow = { 0 };
+								if (m_fFreq)
+								{
+									if (QueryPerformanceCounter(&qpcNow))
+									{
+										if (m_nLastCounter)
+										{
+											interval = (double(qpcNow.QuadPart - m_nLastCounter)) / (m_fFreq*m_nFramesSinceUpdate);;
+										}
+									}
+								}
+							AnalyseBody(joints, jointPoints , interval); //*** New
                             DrawHand(leftHandState, jointPoints[JointType_HandLeft]); //* Draw the Left Hand
                             DrawHand(rightHandState, jointPoints[JointType_HandRight]); //* Draw the Right Hand
                         }
@@ -413,9 +436,9 @@ void CBodyBasics::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
         {
             m_nStartTime = nTime;
         }
-
         double fps = 0.0;
-
+		double interval = 0.0;
+	//	Sleep(1000);
         LARGE_INTEGER qpcNow = {0};
         if (m_fFreq)
         {
@@ -425,12 +448,14 @@ void CBodyBasics::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                 {
                     m_nFramesSinceUpdate++;
                     fps = m_fFreq * m_nFramesSinceUpdate / double(qpcNow.QuadPart - m_nLastCounter);
+					
+					interval =  (double(qpcNow.QuadPart - m_nLastCounter) )/ (m_fFreq*m_nFramesSinceUpdate);
                 }
             }
         }
 
         WCHAR szStatusMessage[64];
-        StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" FPS = %0.2f    Time = %I64d", fps, (nTime - m_nStartTime));
+        StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" FPS = %0.2f    Time = %I64d		Interval = %0.5f", fps, (nTime - m_nStartTime), interval);
 
         if (SetStatusMessage(szStatusMessage, 1000, false))
         {
@@ -606,50 +631,50 @@ void CBodyBasics::DrawBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoin
 //
 // *** Added FUNCTIONS ***
 //
-void CBodyBasics::SaveBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints)
+void CBodyBasics::SaveBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double time)
 { //*** Needs work, Like not even started
 	// Draw the bones
 	
 	// Torso
-	ComputeJointVector(pJoints, pJointPoints, JointType_Head, JointType_Neck);
-	ComputeJointVector(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
-	ComputeJointVector(pJoints, pJointPoints, JointType_SpineShoulder, JointType_SpineMid);
-	ComputeJointVector(pJoints, pJointPoints, JointType_SpineMid, JointType_SpineBase);
-	ComputeJointVector(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderRight);
-	ComputeJointVector(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderLeft);
-	ComputeJointVector(pJoints, pJointPoints, JointType_SpineBase, JointType_HipRight);
-	ComputeJointVector(pJoints, pJointPoints, JointType_SpineBase, JointType_HipLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_Head, JointType_Neck);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_Neck, JointType_SpineShoulder);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_SpineShoulder, JointType_SpineMid);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_SpineMid, JointType_SpineBase);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_SpineShoulder, JointType_ShoulderRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_SpineShoulder, JointType_ShoulderLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_SpineBase, JointType_HipRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_SpineBase, JointType_HipLeft);
 
 	// Right Arm    
-	ComputeJointVector(pJoints, pJointPoints, JointType_ShoulderRight, JointType_ElbowRight);
-	ComputeJointVector(pJoints, pJointPoints, JointType_ElbowRight, JointType_WristRight);
-	ComputeJointVector(pJoints, pJointPoints, JointType_WristRight, JointType_HandRight);
-	ComputeJointVector(pJoints, pJointPoints, JointType_HandRight, JointType_HandTipRight);
-	ComputeJointVector(pJoints, pJointPoints, JointType_WristRight, JointType_ThumbRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_ShoulderRight, JointType_ElbowRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_ElbowRight, JointType_WristRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_WristRight, JointType_HandRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_HandRight, JointType_HandTipRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_WristRight, JointType_ThumbRight);
 
 	// Left Arm
-	ComputeJointVector(pJoints, pJointPoints, JointType_ShoulderLeft, JointType_ElbowLeft);
-	ComputeJointVector(pJoints, pJointPoints, JointType_ElbowLeft, JointType_WristLeft);
-	ComputeJointVector(pJoints, pJointPoints, JointType_WristLeft, JointType_HandLeft);
-	ComputeJointVector(pJoints, pJointPoints, JointType_HandLeft, JointType_HandTipLeft);
-	ComputeJointVector(pJoints, pJointPoints, JointType_WristLeft, JointType_ThumbLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_ShoulderLeft, JointType_ElbowLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_ElbowLeft, JointType_WristLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_WristLeft, JointType_HandLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_HandLeft, JointType_HandTipLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_WristLeft, JointType_ThumbLeft);
 
 	// Right Leg
-	ComputeJointVector(pJoints, pJointPoints, JointType_HipRight, JointType_KneeRight);
-	ComputeJointVector(pJoints, pJointPoints, JointType_KneeRight, JointType_AnkleRight);
-	ComputeJointVector(pJoints, pJointPoints, JointType_AnkleRight, JointType_FootRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_HipRight, JointType_KneeRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_KneeRight, JointType_AnkleRight);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_AnkleRight, JointType_FootRight);
 
 	// Left Leg
-	ComputeJointVector(pJoints, pJointPoints, JointType_HipLeft, JointType_KneeLeft);
-	ComputeJointVector(pJoints, pJointPoints, JointType_KneeLeft, JointType_AnkleLeft);
-	ComputeJointVector(pJoints, pJointPoints, JointType_AnkleLeft, JointType_FootLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_HipLeft, JointType_KneeLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_KneeLeft, JointType_AnkleLeft);
+	ComputeJointVector(pJoints, pJointPoints, time, JointType_AnkleLeft, JointType_FootLeft);
 
-	UserBody.incFrameCounter();
+	
 }
-void CBodyBasics::AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints)
+void CBodyBasics::AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double& interval)
 {
-	// Draw the bones
-
+	// Analyse the bones
+	UserBody.interval = interval;
 	// Torso
 	ComputeJointDerivative(pJoints, pJointPoints, JointType_Head, JointType_Neck);
 	ComputeJointDerivative(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
@@ -683,9 +708,10 @@ void CBodyBasics::AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointP
 	ComputeJointDerivative(pJoints, pJointPoints, JointType_HipLeft, JointType_KneeLeft);
 	ComputeJointDerivative(pJoints, pJointPoints, JointType_KneeLeft, JointType_AnkleLeft);
 	ComputeJointDerivative(pJoints, pJointPoints, JointType_AnkleLeft, JointType_FootLeft);
-
+	
+	UserBody.incFrameCounter();
 }
-void CBodyBasics::ComputeJointVector(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1)
+void CBodyBasics::ComputeJointVector(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double time, JointType joint0, JointType joint1)
 { // Code from DrawBone()
 	TrackingState joint0State = pJoints[joint0].TrackingState;
 	TrackingState joint1State = pJoints[joint1].TrackingState;
@@ -708,14 +734,14 @@ void CBodyBasics::ComputeJointVector(const Joint* pJoints, const D2D1_POINT_2F* 
 		float Tx = (pJoints[joint0].Position.X) - (pJoints[joint1].Position.X);
 		float Ty = (pJoints[joint0].Position.Y) - (pJoints[joint1].Position.Y);
 		float Tz = (pJoints[joint0].Position.Z) - (pJoints[joint1].Position.Z);
-		UserBody.saveJointVector(joint0, joint1, Tx, Ty, Tz, TrackingState_Tracked);
+		UserBody.saveJointVector(joint0, joint1, Tx, Ty, Tz, TrackingState_Tracked, time);
 	}
 	else
 	{
 		float Tx = (pJoints[joint0].Position.X) - (pJoints[joint1].Position.X);
 		float Ty = (pJoints[joint0].Position.Y) - (pJoints[joint1].Position.Y);
 		float Tz = (pJoints[joint0].Position.Z) - (pJoints[joint1].Position.Z);
-		UserBody.saveJointVector(joint0, joint1, Tx, Ty, Tz, TrackingState_Inferred);
+		UserBody.saveJointVector(joint0, joint1, Tx, Ty, Tz, TrackingState_Inferred, time);
 	}
 }
 void CBodyBasics::ComputeJointDerivative(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1)
