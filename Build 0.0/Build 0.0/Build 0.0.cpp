@@ -180,6 +180,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case ID_WRISTS_ACCELLERATION:
 				GuiApp[WRISTSACCELL_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
 				GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_ElbowLeft, JointType_WristLeft);
+				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
@@ -251,6 +252,7 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (wmId)
 	{
 	case ID_HIPS_ANGLE:
+		GuiApp[HIPSANGLE_PNUM].Datatype = 010;
 		GuiApp[HIPSANGLE_PNUM].Run(hInst, Show, hDlg, wmId);
 		
 		GuiAppPtr[HIPSANGLE_PNUM] = NewGUI;
@@ -258,6 +260,7 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		ToClose[HIPSANGLE_PNUM] = std::this_thread::get_id();
 		break;
 	case ID_WRISTS_ACCELLERATION:
+		GuiApp[WRISTSACCELL_PNUM].Datatype = 120;
 		GuiApp[WRISTSACCELL_PNUM].Run(hInst, Show, hDlg, wmId);
 				
 		ToClose[WRISTSACCELL_PNUM] = std::this_thread::get_id();

@@ -142,8 +142,12 @@ private:
 	void                    SaveBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double time);
 //	void                    LoadBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints);
 	void                    AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints , double& interval);
-	void					ComputeJointVector(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double time, JointType joint0, JointType joint1);
-	void					ComputeJointDerivative(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1);
+	void					ComputeLimbVector(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double time, JointType joint0, JointType joint1);
+	void					ComputeLimbDerivative(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1);
+	void					ComputeJointDerivative(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0);
+	
+	void					SaveJointPoint(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double time, JointType joint0);
+	
 	/// <summary>
     /// Draws a hand symbol if the hand is tracked: red circle = closed, green circle = opened; blue circle = lasso
     /// </summary>

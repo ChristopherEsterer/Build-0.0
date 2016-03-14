@@ -26,6 +26,7 @@ public:
 
 	void						setOptiBodyClass(void * UBC);
 	
+	int Datatype = 000; // for the getData() call to optibody
 	//void						setOptiBodyClass(OptiBody& UBC);
 private:
 	HWND                    m_hWnd;

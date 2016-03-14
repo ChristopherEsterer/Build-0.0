@@ -20,7 +20,7 @@ TYPE2 Mapto(std::deque<TYPE> dataBuf, TYPE2 MAX, TYPE2 MIN, TYPE3 data)
 	if (DataRange == 0) { return 0; }
 	TYPE3 DataNorm = data - DataMin;
 	TYPE3 T = ( (DataNorm / DataRange) * (MAX - MIN) );
-	return T;
+	return abs(T);
 }
 
 GUIApp::GUIApp() :
@@ -132,23 +132,35 @@ DWORD GUIApp::Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 };
 void GUIApp::Update(void)
 {// *** edit
+/*
+Check if UserBody,
+Set TempBody
+Case buffer size
+	Ask TempBody For data (lock)
+	Receive Data from Tempbody (unlock/return)
+		Put data point into buffer
+Display DataBufer()
+
+*/
+
 	if (!m_UserBody)
 	{
 		return;
 	}
+
 	OptiBody* TempBody;
 	TempBody =  (OptiBody*) m_UserBody;
 	//IBodyFrame* pBodyFrame = NULL;
-	if (dataBuffer.size() < cDataBufferSize)
+	if (dataBuffer[0].size() < cDataBufferSize)
 	{
-		dataBuffer[0].push_back(TempBody->getJointDerivativeMapData(JointType0, JointType1, 4));
-		dataBuffer[1].push_back(TempBody->getJointDerivativeMapData(JointType0, JointType1, 0));
+		dataBuffer[0].push_back(TempBody->getData(JointType0, JointType1, Datatype));
+		dataBuffer[1].push_back(TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4)));
 		//dataBuffer[0].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 4));
 		//dataBuffer[1].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 2));
 	}
 	else {
-		dataBuffer[0].push_back(TempBody->getJointDerivativeMapData(JointType0, JointType1, 4));
-		dataBuffer[1].push_back(TempBody->getJointDerivativeMapData(JointType0, JointType1, 0));
+		dataBuffer[0].push_back(TempBody->getData(JointType0, JointType1, Datatype));
+		dataBuffer[1].push_back(TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4)));
 		//dataBuffer[0].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 4));
 		//dataBuffer[1].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 2));		
 		dataBuffer[1].pop_front();
@@ -268,25 +280,25 @@ void GUIApp::Display(void)
 				D2D1_POINT_2F PointTemp;
 				//PointTemp.x = i / dataBuffer[0].size() * width;
 				//PointTemp.y = (float)(dataBuffer[1][i]);
-				PointTemp.x = Mapto(dataBuffer[0], width, 0, dataBuffer[0][i]);
+				PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
 
-				PointTemp.y = (height - 80) - Mapto(dataBuffer[1],(height-80),0, dataBuffer[1][i]);
+				PointTemp.y = /*(height - 80) -*/ Mapto(dataBuffer[0],(height-80),0,dataBuffer[0][i]);
 				D2D1_POINT_2F PointTemp2;
 				//PointTemp2.x = (i+1) / dataBuffer[0].size() * width;
 				//PointTemp2.y = (float)(dataBuffer[1][i+1]);
-				PointTemp2.x = Mapto(dataBuffer[0], width, 0, dataBuffer[0][i+1]);
+				PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i+1]);
 
-				PointTemp2.y = (height - 80) - Mapto(dataBuffer[1], (height - 80), 0, dataBuffer[1][i+1]);
+				PointTemp2.y = /*(height - 80) -*/ Mapto(dataBuffer[0],(height-80),0,dataBuffer[0][i+1]);
 
 				m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
 				
-				WCHAR szStatusMessage[64];
-				StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" Point0 = %0.2f  ,  %0.2f  :Point1 = %0.2f , %0.2f  :Data: %0.2f , %0.2f , %0.2f ", PointTemp.x, PointTemp.y, PointTemp2.x, PointTemp2.y, dataBuffer[1].front(), *std::max_element(dataBuffer.begin(), dataBuffer.end()) , dataBuffer[0].back());
+				//WCHAR szStatusMessage[64];
+				//StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" Point0 = %0.2f  ,  %0.2f  :Point1 = %0.2f , %0.2f  :Data: %0.2f , %0.2f , %0.2f ", PointTemp.x, PointTemp.y, PointTemp2.x, PointTemp2.y, dataBuffer[1].front(), *std::max_element(dataBuffer.begin(), dataBuffer.end()) , dataBuffer[0].back());
 
-				if (SetStatusMessage(szStatusMessage, 1000, false))
-				{
+				//if (SetStatusMessage(szStatusMessage, 1000, false))
+				//{
 
-				}
+				//}
 			}
 			D2D1_POINT_2F Point0;
 			D2D1_POINT_2F Point1;
