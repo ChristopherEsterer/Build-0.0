@@ -27,6 +27,14 @@ public: // Public functions for BodyBasic.cpp to call
 
 	double getData(int JointType0, int JointType1, int Datatype);
 	double getJointData(int JointType, int Datatype); // remove?
+	
+	void postToGui(void);
+	
+	std::vector<double> times;
+	HWND getHWnd(void);
+	void setHWnd(HWND hWnd);
+	void setNewDataFlag(BOOL b);
+	BOOL getNewDataFlag(void);
 private:
 	// Timing Variables
 	HWND                    m_hWnd;
@@ -35,8 +43,18 @@ private:
 	double                  m_fFreq;
 	INT64                   m_nNextStatusTime;
 	DWORD                   m_nFramesSinceUpdate;
+	BOOL NewDataFlag = FALSE;
+	int misdatactr = 0;
+
+	mutable std::mutex DataFlagMutex;
+	mutable std::mutex PointDataMutex;
+	mutable std::mutex LimbDataMutex;
+	//mutable std::mutex EMGDataMutex;
+	//mutable std::mutex ForceDataMutex;
 	// OptiBody Variables
 	std::array<BOOLEAN,4>	FrameCounters; // Each bit n or n+1 for frames
+
+	
 	//Limb [0]
 	//Limb1Derivative [1]
 	//Joint [2]
@@ -52,6 +70,7 @@ private:
 			float Y;
 			float Z;
 			float R; // vector lenght
+			float interval;
 			double T; // TotalTime
 		}LimbVector;
 		std::array<std::array <LimbVector, 26>, 26> LimbMap; // 26X26 matrix
@@ -69,6 +88,7 @@ private:
 			float Y;
 			float Z;
 			float R; // vector lenght
+			float interval; // *** implement
 			double T; // TotalTime
 		}JointPoint;
 		std::array<JointPoint, 26> JointArray;

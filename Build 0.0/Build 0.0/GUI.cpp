@@ -13,14 +13,27 @@ static int C = 0;
 template<typename TYPE, typename TYPE2, typename TYPE3>
 TYPE2 Mapto(std::deque<TYPE> dataBuf, TYPE2 MAX, TYPE2 MIN, TYPE3 data)
 {
-	TYPE DataMax = *std::max_element(dataBuf.begin(),dataBuf.end());
-	TYPE DataMin = *std::min_element(dataBuf.begin(),dataBuf.end());
-
+	//TYPE DataMax = *std::max_element(dataBuf.begin(),dataBuf.end());
+	//TYPE DataMin = *std::min_element(dataBuf.begin(),dataBuf.end());
+	TYPE DataMax = *std::max_element(dataBuf.begin(), dataBuf.end());
+	TYPE DataMin = *std::min_element(dataBuf.begin(), dataBuf.end());
+	// add check to min element. getting -inifin
 	TYPE2 DataRange = (DataMax - DataMin);
 	if (DataRange == 0) { return 0; }
 	TYPE3 DataNorm = data - DataMin;
-	TYPE3 T = ( (DataNorm / DataRange) * (MAX - MIN) );
-	return abs(T);
+	TYPE3 T = ( (DataNorm / (DataRange)) * (MAX - MIN) );
+	return T;
+}
+float MaptoY(std::deque<double> dataBuf, float MAX, float MIN, double data)
+{
+	double DataMax = *std::max_element(dataBuf.begin(), dataBuf.end());
+	double DataMin = *std::min_element(dataBuf.begin(), dataBuf.end());
+	double DataRange = (DataMax - DataMin);
+	double PixleRange = (MAX - MIN);
+	if (DataRange == 0) { return 0; }
+	double DataNorm = data - DataMin;
+	double T = (((PixleRange / DataRange) * data));
+	return (float)T;
 }
 
 GUIApp::GUIApp() :
@@ -120,6 +133,13 @@ DWORD GUIApp::Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 			TranslateMessage(&msg);
 			DispatchMessageW(&msg);
 		}
+
+		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
 	}
 	
 	// Window is closeing, deregister the class.
@@ -151,22 +171,48 @@ Display DataBufer()
 	OptiBody* TempBody;
 	TempBody =  (OptiBody*) m_UserBody;
 	//IBodyFrame* pBodyFrame = NULL;
-	if (dataBuffer[0].size() < cDataBufferSize)
+	if (TempBody->getNewDataFlag())
 	{
-		dataBuffer[0].push_back(TempBody->getData(JointType0, JointType1, Datatype));
-		dataBuffer[1].push_back(TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4)));
-		//dataBuffer[0].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 4));
-		//dataBuffer[1].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 2));
-	}
-	else {
-		dataBuffer[0].push_back(TempBody->getData(JointType0, JointType1, Datatype));
-		dataBuffer[1].push_back(TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4)));
-		//dataBuffer[0].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 4));
-		//dataBuffer[1].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 2));		
-		dataBuffer[1].pop_front();
-		dataBuffer[0].pop_front();
-	}
+		if (dataBuffer[0].size() < cDataBufferSize)
+		{
+			if (dataBuffer[1].size() == 0)
+			{
+				m_nStartTime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
+			}
+			
+			//dataBuffer[0].push_back(TempBody->getData(JointType0, JointType1, Datatype));
+			double tempData;
+			
+			do {
+				tempData = TempBody->getData(JointType0, JointType1, Datatype);
+			} while (tempData == 0);
 
+			double temptime;// = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
+			do {
+				temptime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
+			} while (temptime == -INFINITY);
+			dataBuffer[0].push_back(tempData);
+			dataBuffer[1].push_back(temptime - m_nStartTime);
+	//		dataBuffer[1].push_back((TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4))) - m_nStartTime);
+
+			//dataBuffer[0].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 4));
+			//dataBuffer[1].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 2));
+		}
+		else {
+			dataBuffer[0].push_back(TempBody->getData(JointType0, JointType1, Datatype));
+			double temptime;// = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
+			do {
+				temptime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
+			} while (temptime == -INFINITY);
+			dataBuffer[1].push_back(temptime - m_nStartTime);
+			//dataBuffer[1].push_back(TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4)));
+			//dataBuffer[0].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 4));
+			//dataBuffer[1].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 2));		
+			dataBuffer[1].pop_front();
+			dataBuffer[0].pop_front();
+		}
+		TempBody->setNewDataFlag(FALSE);
+	}
 	/*HRESULT hr = m_UserBody->AcquireLatestFrame(&pBodyFrame);
 
 	if (SUCCEEDED(hr))
@@ -201,6 +247,25 @@ void GUIApp::setJointTypes(int J0, int J1)
 {
 	JointType0 = J0;
 	JointType1 = J1;
+}
+void GUIApp::pushData(double data, double time)
+{
+	if (dataBuffer[0].size() < cDataBufferSize)
+	{
+		if (dataBuffer[1].size() == 0)
+		{
+			m_nStartTime = time;
+		}
+		dataBuffer[0].push_back(data);
+		dataBuffer[1].push_back(time - m_nStartTime);
+
+	}
+	else {
+		dataBuffer[0].push_back(data);
+		dataBuffer[1].push_back(time - m_nStartTime);
+		dataBuffer[1].pop_front();
+		dataBuffer[0].pop_front();
+	}
 }
 void GUIApp::setOptiBodyClass(void* UBC)
 {
@@ -241,6 +306,13 @@ LRESULT GUIApp::DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// Bind application window handle
 		m_hWnd = hWnd;
 
+		OptiBody* TempBody;
+		TempBody = (OptiBody*)m_UserBody;
+
+		if (m_UserBody) {
+
+			Kinect_hWnd = TempBody->getHWnd(); 
+		}
 		// Init Direct2D
 		D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);
 
@@ -276,29 +348,34 @@ void GUIApp::Display(void)
 			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH), &rct);
 			int width = rct.right;
 			int height = rct.bottom;
-			for (int i = 0; i < dataBuffer[0].size()-1; i++) {
-				D2D1_POINT_2F PointTemp;
-				//PointTemp.x = i / dataBuffer[0].size() * width;
-				//PointTemp.y = (float)(dataBuffer[1][i]);
-				PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
+			if (dataBuffer[0].size() != 0) {
+				for (int i = 0; i < dataBuffer[0].size() - 1; i++) {
 
-				PointTemp.y = /*(height - 80) -*/ Mapto(dataBuffer[0],(height-80),0,dataBuffer[0][i]);
-				D2D1_POINT_2F PointTemp2;
-				//PointTemp2.x = (i+1) / dataBuffer[0].size() * width;
-				//PointTemp2.y = (float)(dataBuffer[1][i+1]);
-				PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i+1]);
+					D2D1_POINT_2F PointTemp;
+					//PointTemp.x = i / dataBuffer[0].size() * width;
+					//PointTemp.y = (float)(dataBuffer[1][i]);
+					PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
 
-				PointTemp2.y = /*(height - 80) -*/ Mapto(dataBuffer[0],(height-80),0,dataBuffer[0][i+1]);
+					PointTemp.y = /*(height - 80) -*/  ((height - 80)/2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
+					//PointTemp.y = /*(height - 80) -*/ Mapto(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
+					D2D1_POINT_2F PointTemp2;
+					//PointTemp2.x = (i+1) / dataBuffer[0].size() * width;
+					//PointTemp2.y = (float)(dataBuffer[1][i+1]);
+					PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i + 1]);
 
-				m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
-				
-				//WCHAR szStatusMessage[64];
-				//StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" Point0 = %0.2f  ,  %0.2f  :Point1 = %0.2f , %0.2f  :Data: %0.2f , %0.2f , %0.2f ", PointTemp.x, PointTemp.y, PointTemp2.x, PointTemp2.y, dataBuffer[1].front(), *std::max_element(dataBuffer.begin(), dataBuffer.end()) , dataBuffer[0].back());
+					PointTemp2.y = /*(height - 80) -*/  ((height - 80)/2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]) ;
+					//PointTemp2.y = /*(height - 80) -*/ Mapto(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]);
 
-				//if (SetStatusMessage(szStatusMessage, 1000, false))
-				//{
+					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
 
-				//}
+					//WCHAR szStatusMessage[64];
+					//StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" Point0 = %0.2f  ,  %0.2f  :Point1 = %0.2f , %0.2f  :Data: %0.2f , %0.2f , %0.2f ", PointTemp.x, PointTemp.y, PointTemp2.x, PointTemp2.y, dataBuffer[1].front(), *std::max_element(dataBuffer.begin(), dataBuffer.end()) , dataBuffer[0].back());
+
+					//if (SetStatusMessage(szStatusMessage, 1000, false))
+					//{
+
+					//}
+				}
 			}
 			D2D1_POINT_2F Point0;
 			D2D1_POINT_2F Point1;
@@ -308,7 +385,16 @@ void GUIApp::Display(void)
 			Point1.x = width;
 			Point1.y = height - 80;
 			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);
+			Point0.x = 0;
+			Point0.y = Point0.y/2;
+			Point1.x = width;
+			Point1.y = Point1.y/2;
+			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine4, c_GraphLineThickness);
 		}
+		else {
+			Sleep(1);
+		}
+
 		hr = m_pRenderTarget->EndDraw();
 	}
 

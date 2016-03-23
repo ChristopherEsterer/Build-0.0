@@ -52,9 +52,12 @@ public:
 	DWORD                     Run(HINSTANCE hInstance, int nCmdShow , HWND hDlg);
 	int KMain(HINSTANCE hInstance, int nShowCmd);
 
+	HWND  ParentWindow;
 	void* GetUserBody(void);
 
+
 private:
+
     HWND                    m_hWnd;
     INT64                   m_nStartTime;
     INT64                   m_nLastCounter;

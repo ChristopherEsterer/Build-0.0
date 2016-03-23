@@ -6,11 +6,12 @@
 #include "Build 0.0.h"
 #include "OptiBody.h"	// Alaysis Class
 #include "BodyBasics.h" // Kinect
-#include <thread>		// multithreading
-#include <vector>
+
+
 #define MAX_LOADSTRING 100
 #define HIPSANGLE_PNUM 0
 #define WRISTSACCELL_PNUM 1
+#define WRISTSVELO_PNUM 2
 #define THREAD_MAX 9
 //Process number linked to: window, thread, and GuiApp itterator ** added
 
@@ -63,16 +64,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_BUILD00));
 
     MSG msg;
+	LPMSG lpMsg;
+	// New Data message loop:
+
 
     // Main message loop:
     while (GetMessage(&msg, nullptr, 0, 0))
     {
+		if (msg.message == 0x8001) {
+			
+			Sleep(1);
+		}
         if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
         {
             TranslateMessage(&msg);
+
             DispatchMessage(&msg);
         }
+
     }
+
 
     return (int) msg.wParam;
 }
@@ -179,9 +190,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case ID_WRISTS_ACCELLERATION:
 				GuiApp[WRISTSACCELL_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
-				GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_ElbowLeft, JointType_WristLeft);
+				GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_WristLeft, JointType_WristLeft);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
-
+				break;
+			case ID_WRISTS_VELOCITY:
+				GuiApp[WRISTSVELO_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
+				GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_WristLeft, JointType_WristLeft);
+				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
+				break;
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
@@ -237,6 +253,7 @@ void StartKinect(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HINSTANCE NEWhInstance = (HINSTANCE)GetModuleHandle(NULL);
 	KinectInst = NEWhInstance; // save incase we need it later
+	//kinectApp.ParentWindow(hDlg);
 	kinectApp.Run(hInst, Show, hDlg);
 
 };
@@ -260,12 +277,17 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		ToClose[HIPSANGLE_PNUM] = std::this_thread::get_id();
 		break;
 	case ID_WRISTS_ACCELLERATION:
-		GuiApp[WRISTSACCELL_PNUM].Datatype = 120;
+		GuiApp[WRISTSACCELL_PNUM].Datatype = 121;
 		GuiApp[WRISTSACCELL_PNUM].Run(hInst, Show, hDlg, wmId);
 				
 		ToClose[WRISTSACCELL_PNUM] = std::this_thread::get_id();
+	case ID_WRISTS_VELOCITY:
+		GuiApp[WRISTSVELO_PNUM].Datatype = 111;
+		GuiApp[WRISTSVELO_PNUM].Run(hInst, Show, hDlg, wmId);
+
+		ToClose[WRISTSVELO_PNUM] = std::this_thread::get_id();
 		break;
-			}
+}
 		
 
 	//GuiApp[0].Run(hInst, Show, hDlg, wmId);

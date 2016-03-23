@@ -33,8 +33,15 @@
 #include <array>
 #include <string>
 #include <algorithm>
+#include <vector>
+#include <thread>		// multithreading
+#include <shared_mutex> // mutex for OptiBody
 // GUI Class Header
 #include "GUI.h"
+// Alaysis Class
+#include "OptiBody.h"	
+// Kinect
+#include "BodyBasics.h" 
 // BodyBasic Class Header
 #include "BodyBasics.h"
 // OptiBody Class Header

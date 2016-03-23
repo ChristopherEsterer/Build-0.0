@@ -14,23 +14,26 @@
 
 void OptiBody::saveJointPoint(int JointType, float X, float Y, float Z, int TrackingState, double time)
 {
+	PointDataMutex.lock();
 	Joint[FrameCounters[0]].JointArray[JointType].TrackingState = TrackingState;
 	Joint[FrameCounters[0]].JointArray[JointType].X = X;
 	Joint[FrameCounters[0]].JointArray[JointType].Y = Y;
 	Joint[FrameCounters[0]].JointArray[JointType].Z = Z;
 	Joint[FrameCounters[0]].JointArray[JointType].R = sqrt(X*X + Y*Y + Z*Z);
 	Joint[FrameCounters[0]].JointArray[JointType].T = time;
+	PointDataMutex.unlock();
 }
 
 void OptiBody::saveLimbVector(int JointType0, int JointType1, float X, float Y, float Z, int TrackingState, double time)
 {
+	LimbDataMutex.lock();
 	Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].TrackingState = TrackingState;
 	Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].X = X;
 	Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].Y = Y;
 	Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].Z = Z;
 	Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].R = sqrt(X*X+Y*Y+Z*Z);
 	Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].T = time;
-		
+	LimbDataMutex.unlock();
 };
 
 void OptiBody::getJointSpace(void)
@@ -38,6 +41,9 @@ void OptiBody::getJointSpace(void)
 }
 void OptiBody::incFrameCounter(void)
 {
+	for (int i = 0; i > FrameCounters.size(); i++) {
+		incFrameCounters(i);
+	}
 	//FrameCounter = !FrameCounter;
 }
 void OptiBody::incFrameCounters(int i)
@@ -114,95 +120,155 @@ double OptiBody::getData(int JointType0, int JointType1, int Datatype)
 	switch (Datatype) {
 // Limbs
 	case 000:
+		LimbDataMutex.lock();
 		TempData = Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].X;
+		LimbDataMutex.unlock();
 		break;
 	case 001:
+		LimbDataMutex.lock();
 		TempData = Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].Y;
+		LimbDataMutex.unlock();
 		break;
 	case 002:
+		LimbDataMutex.lock();
 		TempData = Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].Z;
+		LimbDataMutex.unlock();
 		break;
 	case 003:
+		LimbDataMutex.lock();
 		TempData = Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].R;
+		LimbDataMutex.unlock();
 		break;
 	case 004:
+		LimbDataMutex.lock();
 		TempData = Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].T;
+		LimbDataMutex.unlock();
 		break;
 	case 010:
+		LimbDataMutex.lock();
 		TempData = Limb1Derivative[FrameCounters[0]].LimbMap[JointType0][JointType1].X;
+		LimbDataMutex.unlock();
 		break;
 	case 011:
+		LimbDataMutex.lock();
 		TempData = Limb1Derivative[FrameCounters[0]].LimbMap[JointType0][JointType1].Y;
+		LimbDataMutex.unlock();
 		break;
 	case 012:
+		LimbDataMutex.lock();
 		TempData = Limb1Derivative[FrameCounters[0]].LimbMap[JointType0][JointType1].Z;
+		LimbDataMutex.unlock();
 		break;
 	case 013:
+		LimbDataMutex.lock();
 		TempData = Limb1Derivative[FrameCounters[0]].LimbMap[JointType0][JointType1].R;
+		LimbDataMutex.unlock();
 		break;
 	case 014:
+		LimbDataMutex.lock();
 		TempData = Limb1Derivative[FrameCounters[0]].LimbMap[JointType0][JointType1].T;
+		LimbDataMutex.unlock();
 		break;
 	case 020:
+		LimbDataMutex.lock();
 		TempData = Limb2Derivative.LimbMap[JointType0][JointType1].X;
+		LimbDataMutex.unlock();
 		break;
 	case 021:
+		LimbDataMutex.lock();
 		TempData = Limb2Derivative.LimbMap[JointType0][JointType1].Y;
+		LimbDataMutex.unlock();
 		break;
 	case 022:
+		LimbDataMutex.lock();
 		TempData = Limb2Derivative.LimbMap[JointType0][JointType1].Z;
+		LimbDataMutex.unlock();
 		break;
 	case 023:
+		LimbDataMutex.lock();
 		TempData = Limb2Derivative.LimbMap[JointType0][JointType1].R;
+		LimbDataMutex.unlock();
 		break;
 	case 024:
+		LimbDataMutex.lock();
 		TempData = Limb2Derivative.LimbMap[JointType0][JointType1].T;
+		LimbDataMutex.unlock();
 		break;
 // Joints
 	case 100:
+		PointDataMutex.lock();
 		TempData = Joint[FrameCounters[2]].JointArray[JointType0].X;
+		PointDataMutex.unlock();
 		break;
 	case 101:
+		PointDataMutex.lock();
 		TempData = Joint[FrameCounters[2]].JointArray[JointType0].Y;
+		PointDataMutex.unlock();
 		break;
 	case 102:
+		PointDataMutex.lock();
 		TempData = Joint[FrameCounters[2]].JointArray[JointType0].Z;
+		PointDataMutex.unlock();
 		break;
 	case 103:
+		PointDataMutex.lock();
 		TempData = Joint[FrameCounters[2]].JointArray[JointType0].R;
+		PointDataMutex.unlock();
 		break;
 	case 104:
+		PointDataMutex.lock();
 		TempData = Joint[FrameCounters[2]].JointArray[JointType0].T;
+		PointDataMutex.unlock();
 		break;
 	case 110:
+		PointDataMutex.lock();
 		TempData = Joint1Derivative[FrameCounters[3]].JointArray[JointType0].X;
+		PointDataMutex.unlock();
 		break;
 	case 111:
+		PointDataMutex.lock();
 		TempData = Joint1Derivative[FrameCounters[3]].JointArray[JointType0].Y;
+		PointDataMutex.unlock();
 		break;
 	case 112:
+		PointDataMutex.lock();
 		TempData = Joint1Derivative[FrameCounters[3]].JointArray[JointType0].Z;
+		PointDataMutex.unlock();
 		break;
 	case 113:
+		PointDataMutex.lock();
 		TempData = Joint1Derivative[FrameCounters[3]].JointArray[JointType0].R;
+		PointDataMutex.unlock();
 		break;
 	case 114:
+		PointDataMutex.lock();
 		TempData = Joint1Derivative[FrameCounters[3]].JointArray[JointType0].T;
+		PointDataMutex.unlock();
 		break;
 	case 120:
+		PointDataMutex.lock();
 		TempData = Joint2Derivative.JointArray[JointType0].X;
+		PointDataMutex.unlock();
 		break;
 	case 121:
+		PointDataMutex.lock();
 		TempData = Joint2Derivative.JointArray[JointType0].Y;
+		PointDataMutex.unlock();
 		break;
 	case 122:
+		PointDataMutex.lock();
 		TempData = Joint2Derivative.JointArray[JointType0].Z;
+		PointDataMutex.unlock();
 		break;
 	case 123:
+		PointDataMutex.lock();
 		TempData = Joint2Derivative.JointArray[JointType0].R;
+		PointDataMutex.unlock();
 		break;
 	case 124:
+		PointDataMutex.lock();
 		TempData = Joint2Derivative.JointArray[JointType0].T;
+		PointDataMutex.unlock();
 		break;
 
 	}
@@ -224,6 +290,41 @@ double OptiBody::getJointData(int JointType0, int Datatype)
 		TempData = JointDerivativeMap.JointMap[JointType0][JointType1].T;
 	}*/
 	return TempData;
+}
+void OptiBody::postToGui(void)
+{
+
+}
+HWND OptiBody::getHWnd(void)
+{
+	return (HWND)m_hWnd;
+}
+void OptiBody::setHWnd(HWND hWnd)
+{
+	m_hWnd = hWnd;
+}
+void OptiBody::setNewDataFlag(BOOL b)
+{
+	DataFlagMutex.lock();
+		
+		//if(NewDataFlag == b && NewDataFlag == 1)
+		//{
+		//	misdatactr++;
+		//}
+		//else if (NewDataFlag == 1 && b == 0) 
+		//{
+		//	misdatactr = 0;
+		//}
+	NewDataFlag = b;
+	DataFlagMutex.unlock();
+}
+BOOL OptiBody::getNewDataFlag(void)
+{
+	BOOL b;
+	DataFlagMutex.lock();
+	b = NewDataFlag;
+	DataFlagMutex.unlock();
+	return b;
 }
 ;
 OptiBody::~OptiBody()

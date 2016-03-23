@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEFECTS>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\</FILEPATH>
+      <FILENAME>optibody.cpp</FILENAME>
+      <LINE>209</LINE>
+      <COLUMN>1</COLUMN>
+    </SFA>
+    <DEFECTCODE>6001</DEFECTCODE>
+    <DESCRIPTION>Using uninitialized memory 'TempData'.</DESCRIPTION>
+    <FUNCTION>OptiBody::getData</FUNCTION>
+    <DECORATED>?getData@OptiBody@@QAENHHH@Z</DECORATED>
+    <FUNCLINE>106</FUNCLINE>
+    <PROBABILITY>1</PROBABILITY>
+    <RANK>3</RANK>
+    <CATEGORY>
+      <RULECATEGORY>mspft</RULECATEGORY>
+    </CATEGORY>
+    <PATH>
+      <SFA>
+        <FILEPATH>c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\</FILEPATH>
+        <FILENAME>optibody.cpp</FILENAME>
+        <LINE>113</LINE>
+        <COLUMN>8</COLUMN>
+        <KEYEVENT>
+          <ID>1</ID>
+          <KIND>declaration</KIND>
+          <IMPORTANCE>Essential</IMPORTANCE>
+          <MESSAGE>'TempData' is not initialized</MESSAGE>
+        </KEYEVENT>
+      </SFA>
+      <SFA>
+        <FILEPATH>c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\</FILEPATH>
+        <FILENAME>optibody.cpp</FILENAME>
+        <LINE>114</LINE>
+        <COLUMN>9</COLUMN>
+        <KEYEVENT>
+          <ID>2</ID>
+          <KIND>branch</KIND>
+          <IMPORTANCE>Full</IMPORTANCE>
+          <MESSAGE>Assume switch ( 'Datatype' ) resolves to the default case</MESSAGE>
+        </KEYEVENT>
+      </SFA>
+      <SFA>
+        <FILEPATH>c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\</FILEPATH>
+        <FILENAME>optibody.cpp</FILENAME>
+        <LINE>209</LINE>
+        <COLUMN>1</COLUMN>
+        <KEYEVENT>
+          <ID>3</ID>
+          <KIND>usage</KIND>
+          <IMPORTANCE>Essential</IMPORTANCE>
+          <MESSAGE>'TempData' is used, but may not have been initialized</MESSAGE>
+        </KEYEVENT>
+      </SFA>
+    </PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\</FILEPATH>
+      <FILENAME>optibody.cpp</FILENAME>
+      <LINE>226</LINE>
+      <COLUMN>1</COLUMN>
+    </SFA>
+    <DEFECTCODE>6001</DEFECTCODE>
+    <DESCRIPTION>Using uninitialized memory 'TempData'.</DESCRIPTION>
+    <FUNCTION>OptiBody::getJointData</FUNCTION>
+    <DECORATED>?getJointData@OptiBody@@QAENHH@Z</DECORATED>
+    <FUNCLINE>211</FUNCLINE>
+    <PROBABILITY>1</PROBABILITY>
+    <RANK>3</RANK>
+    <CATEGORY>
+      <RULECATEGORY>mspft</RULECATEGORY>
+    </CATEGORY>
+    <PATH>
+      <SFA>
+        <FILEPATH>c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\</FILEPATH>
+        <FILENAME>optibody.cpp</FILENAME>
+        <LINE>213</LINE>
+        <COLUMN>8</COLUMN>
+        <KEYEVENT>
+          <ID>1</ID>
+          <KIND>declaration</KIND>
+          <IMPORTANCE>Essential</IMPORTANCE>
+          <MESSAGE>'TempData' is not initialized</MESSAGE>
+        </KEYEVENT>
+      </SFA>
+      <SFA>
+        <FILEPATH>c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\</FILEPATH>
+        <FILENAME>optibody.cpp</FILENAME>
+        <LINE>226</LINE>
+        <COLUMN>1</COLUMN>
+        <KEYEVENT>
+          <ID>2</ID>
+          <KIND>usage</KIND>
+          <IMPORTANCE>Essential</IMPORTANCE>
+          <MESSAGE>'TempData' is used, but may not have been initialized</MESSAGE>
+        </KEYEVENT>
+      </SFA>
+    </PATH>
+  </DEFECT>
+</DEFECTS>

@@ -10,7 +10,7 @@
 
 class GUIApp
 {
-	static const int        cDataBufferSize = 300;
+	static const int        cDataBufferSize = 100;
 public:
 	GUIApp();
 	~GUIApp();
@@ -23,14 +23,15 @@ public:
 	void						DiscardDirect2DResources();
 	void						Update(void);
 	void						setJointTypes(int J0, int J1);
-
+	void						pushData(double data, double time);
 	void						setOptiBodyClass(void * UBC);
 	
 	int Datatype = 000; // for the getData() call to optibody
 	//void						setOptiBodyClass(OptiBody& UBC);
 private:
-	HWND                    m_hWnd;
-	INT64                   m_nStartTime;
+	HWND                    m_hWnd, Kinect_hWnd;
+
+	double                  m_nStartTime;
 	INT64                   m_nLastCounter;
 	double                  m_fFreq;
 	INT64                   m_nNextStatusTime;
@@ -40,7 +41,7 @@ private:
 	int						JointType0;
 	int						JointType1;
 	
-	std::array<std::deque<float>,2>			dataBuffer; // 2 data points, one time one value
+	std::array<std::deque<double>,2>			dataBuffer; // 2 data points, one time one value
 
 
 	void*					m_UserBody;
