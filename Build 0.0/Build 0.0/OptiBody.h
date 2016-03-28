@@ -21,6 +21,11 @@ public: // Public functions for BodyBasic.cpp to call
 	void incFrameCounter(void);
 	void incFrameCounters(int i);
 	void compDerivative(int JointType0, int JointType1, int c);
+
+	
+	
+	void compJointAngle(int jointA0);
+	
 	~OptiBody();
 	OptiBody();
 	double interval;
@@ -54,7 +59,7 @@ private:
 	// OptiBody Variables
 	std::array<BOOLEAN,4>	FrameCounters; // Each bit n or n+1 for frames
 
-	
+	float calculateAngle(double X1, double Y1, double Z1, double R1, double X2, double Y2, double Z2, double R2);
 	//Limb [0]
 	//Limb1Derivative [1]
 	//Joint [2]
@@ -97,4 +102,5 @@ private:
 	std::array<JointArray, 2> Joint1Derivative;// two frames n-1 and n
 	JointArray Joint2Derivative;// n of second derivative
 	
+	std::array<float, 26> JointAngles;
 };

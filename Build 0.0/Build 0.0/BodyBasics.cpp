@@ -361,6 +361,7 @@ void CBodyBasics::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
 
         if (SUCCEEDED(hr) && m_pRenderTarget && m_pCoordinateMapper)
         {
+
             m_pRenderTarget->BeginDraw();
             m_pRenderTarget->Clear();
 
@@ -415,7 +416,8 @@ void CBodyBasics::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
 										}
 									}
 								}
-							AnalyseBody(joints, jointPoints , interval); //*** New
+
+							AnalyseBody( joints, jointPoints, interval);
                             DrawHand(leftHandState, jointPoints[JointType_HandLeft]); //* Draw the Left Hand
                             DrawHand(rightHandState, jointPoints[JointType_HandRight]); //* Draw the Right Hand
                         }
@@ -432,7 +434,8 @@ void CBodyBasics::ProcessBody(INT64 nTime, int nBodyCount, IBody** ppBodies)
                 hr = S_OK;
                 DiscardDirect2DResources();
             }
-        }
+
+		}
 
 		//UINT msg = 0x8001;
 
@@ -741,38 +744,40 @@ void CBodyBasics::AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointP
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_KneeLeft);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_AnkleLeft);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_FootLeft);
+
+	UserBody.compJointAngle(JointType_SpineMid);
 	// Torso
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_Head, JointType_Neck);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_SpineMid);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineMid, JointType_SpineBase);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderRight);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderLeft);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineBase, JointType_HipRight);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineBase, JointType_HipLeft);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_Head, JointType_Neck);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_SpineMid);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineMid, JointType_SpineBase);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderRight);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineShoulder, JointType_ShoulderLeft);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineBase, JointType_HipRight);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_SpineBase, JointType_HipLeft);
 
 	// Right Arm    
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_ShoulderRight, JointType_ElbowRight);
+	/*ComputeLimbDerivative(pJoints, pJointPoints, JointType_ShoulderRight, JointType_ElbowRight);
 	ComputeLimbDerivative(pJoints, pJointPoints, JointType_ElbowRight, JointType_WristRight);
 	ComputeLimbDerivative(pJoints, pJointPoints, JointType_WristRight, JointType_HandRight);
 	ComputeLimbDerivative(pJoints, pJointPoints, JointType_HandRight, JointType_HandTipRight);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_WristRight, JointType_ThumbRight);
+	ComputeLimbDerivative(pJoints, pJointPoints, JointType_WristRight, JointType_ThumbRight);*/
 
 	// Left Arm
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_ShoulderLeft, JointType_ElbowLeft);
+	/*ComputeLimbDerivative(pJoints, pJointPoints, JointType_ShoulderLeft, JointType_ElbowLeft);
 	ComputeLimbDerivative(pJoints, pJointPoints, JointType_ElbowLeft, JointType_WristLeft);
 	ComputeLimbDerivative(pJoints, pJointPoints, JointType_WristLeft, JointType_HandLeft);
 	ComputeLimbDerivative(pJoints, pJointPoints, JointType_HandLeft, JointType_HandTipLeft);
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_WristLeft, JointType_ThumbLeft);
+	ComputeLimbDerivative(pJoints, pJointPoints, JointType_WristLeft, JointType_ThumbLeft);*/
 
 	// Right Leg
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_HipRight, JointType_KneeRight);
-	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_KneeRight, JointType_AnkleRight);
-	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_AnkleRight, JointType_FootRight);
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_HipRight, JointType_KneeRight);
+	////ComputeLimbDerivative(pJoints, pJointPoints, JointType_KneeRight, JointType_AnkleRight);
+	////ComputeLimbDerivative(pJoints, pJointPoints, JointType_AnkleRight, JointType_FootRight);
 
-	// Left Leg
-	ComputeLimbDerivative(pJoints, pJointPoints, JointType_HipLeft, JointType_KneeLeft);
-	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_KneeLeft, JointType_AnkleLeft);
+	//// Left Leg
+	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_HipLeft, JointType_KneeLeft);
+	////ComputeLimbDerivative(pJoints, pJointPoints, JointType_KneeLeft, JointType_AnkleLeft);
 	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_AnkleLeft, JointType_FootLeft);
 	
 	UserBody.incFrameCounter();

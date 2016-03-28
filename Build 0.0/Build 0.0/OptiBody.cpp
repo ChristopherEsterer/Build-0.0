@@ -15,12 +15,12 @@
 void OptiBody::saveJointPoint(int JointType, float X, float Y, float Z, int TrackingState, double time)
 {
 	PointDataMutex.lock();
-	Joint[FrameCounters[0]].JointArray[JointType].TrackingState = TrackingState;
-	Joint[FrameCounters[0]].JointArray[JointType].X = X;
-	Joint[FrameCounters[0]].JointArray[JointType].Y = Y;
-	Joint[FrameCounters[0]].JointArray[JointType].Z = Z;
-	Joint[FrameCounters[0]].JointArray[JointType].R = sqrt(X*X + Y*Y + Z*Z);
-	Joint[FrameCounters[0]].JointArray[JointType].T = time;
+	Joint[FrameCounters[2]].JointArray[JointType].TrackingState = TrackingState;
+	Joint[FrameCounters[2]].JointArray[JointType].X = X;
+	Joint[FrameCounters[2]].JointArray[JointType].Y = Y;
+	Joint[FrameCounters[2]].JointArray[JointType].Z = Z;
+	Joint[FrameCounters[2]].JointArray[JointType].R = sqrt(X*X + Y*Y + Z*Z);
+	Joint[FrameCounters[2]].JointArray[JointType].T = time;
 	PointDataMutex.unlock();
 }
 
@@ -41,7 +41,7 @@ void OptiBody::getJointSpace(void)
 }
 void OptiBody::incFrameCounter(void)
 {
-	for (int i = 0; i > FrameCounters.size(); i++) {
+	for (int i = 0; i < FrameCounters.size(); i++) {
 		incFrameCounters(i);
 	}
 	//FrameCounter = !FrameCounter;
@@ -56,47 +56,64 @@ void OptiBody::compDerivative(int JointType0, int JointType1, int c)
  // 2 Joint1st, 3 Joint2nd
 // if Joint, only JointType0 is used.
 
-float dX, dY, dZ;
+double dX, dY, dZ;
 	switch (c) {
 	case 0:
+		interval = (Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].T - Limb[!FrameCounters[0]].LimbMap[JointType0][JointType1].T);
+
 		dX = ((Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].X - Limb[!FrameCounters[0]].LimbMap[JointType0][JointType1].X) / interval);
 		Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].X = dX;
 		dY = ((Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].Y - Limb[!FrameCounters[0]].LimbMap[JointType0][JointType1].Y) / interval);
 		Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].Y = dY;
 		dZ = ((Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].Z - Limb[!FrameCounters[0]].LimbMap[JointType0][JointType1].Z) / interval);
 		Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].Z = dZ;
-		Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].T = Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].T - interval;
+		Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].T = Limb[FrameCounters[0]].LimbMap[JointType0][JointType1].T ;
 		break;
 	case 1:
+		interval = (Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].T - Limb1Derivative[!FrameCounters[1]].LimbMap[JointType0][JointType1].T);
+
 		dX = ((Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].X - Limb1Derivative[!FrameCounters[1]].LimbMap[JointType0][JointType1].X) / interval);
 		Limb2Derivative.LimbMap[JointType0][JointType1].X = dX;
 		dY = ((Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].Y - Limb1Derivative[!FrameCounters[1]].LimbMap[JointType0][JointType1].Y) / interval);
 		Limb2Derivative.LimbMap[JointType0][JointType1].Y = dY;
 		dZ = ((Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].Z - Limb1Derivative[!FrameCounters[1]].LimbMap[JointType0][JointType1].Z) / interval);
 		Limb2Derivative.LimbMap[JointType0][JointType1].Z = dZ;
-		Limb2Derivative.LimbMap[JointType0][JointType1].T = Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].T - interval;
+		Limb2Derivative.LimbMap[JointType0][JointType1].T = Limb1Derivative[FrameCounters[1]].LimbMap[JointType0][JointType1].T;
 		break;
 	case 2:
-		dX = ((Joint[FrameCounters[2]].JointArray[JointType0].X - Joint[!FrameCounters[2]].JointArray[JointType0].X) / interval);
+		interval = (Joint[FrameCounters[2]].JointArray[JointType0].T - Joint[(!FrameCounters[2])].JointArray[JointType0].T);
+
+		
+		dX = ((Joint[FrameCounters[2]].JointArray[JointType0].X - Joint[(!FrameCounters[2])].JointArray[JointType0].X) / interval);
 		Joint1Derivative[FrameCounters[3]].JointArray[JointType0].X = dX;
-		dY = ((Joint[FrameCounters[2]].JointArray[JointType0].Y - Joint[!FrameCounters[2]].JointArray[JointType0].Y) / interval);
+		dY = ((Joint[FrameCounters[2]].JointArray[JointType0].Y - Joint[(!FrameCounters[2])].JointArray[JointType0].Y) / interval);
 		Joint1Derivative[FrameCounters[3]].JointArray[JointType0].Y = dY;
-		dZ = ((Joint[FrameCounters[2]].JointArray[JointType0].Z - Joint[!FrameCounters[2]].JointArray[JointType0].Z) / interval);
+		dZ = ((Joint[FrameCounters[2]].JointArray[JointType0].Z - Joint[(!FrameCounters[2])].JointArray[JointType0].Z) / interval);
 		Joint1Derivative[FrameCounters[3]].JointArray[JointType0].Z = dZ;
-		Joint1Derivative[FrameCounters[3]].JointArray[JointType0].T = Joint[FrameCounters[2]].JointArray[JointType0].T - interval;
+		Joint1Derivative[FrameCounters[3]].JointArray[JointType0].T = Joint[(FrameCounters[2])].JointArray[JointType0].T;
 		break;
 	case 3:
+		interval = (Joint1Derivative[FrameCounters[3]].JointArray[JointType0].T - Joint1Derivative[!FrameCounters[3]].JointArray[JointType0].T);
+
+	
 		dX = ((Joint1Derivative[FrameCounters[3]].JointArray[JointType0].X - Joint1Derivative[!FrameCounters[3]].JointArray[JointType0].X) / interval);
 		Joint2Derivative.JointArray[JointType0].X = dX;
 		dY = ((Joint1Derivative[FrameCounters[3]].JointArray[JointType0].Y - Joint1Derivative[!FrameCounters[3]].JointArray[JointType0].Y) / interval);
 		Joint2Derivative.JointArray[JointType0].Y = dY;
 		dZ = ((Joint1Derivative[FrameCounters[3]].JointArray[JointType0].Z - Joint1Derivative[!FrameCounters[3]].JointArray[JointType0].Z) / interval);
 		Joint2Derivative.JointArray[JointType0].Z = dZ;
-		Joint2Derivative.JointArray[JointType0].T = Joint[FrameCounters[3]].JointArray[JointType0].T - interval;
+		Joint2Derivative.JointArray[JointType0].T = Joint[FrameCounters[3]].JointArray[JointType0].T;
 		break;
 	}
 	return;
 }
+float OptiBody::calculateAngle(double X1, double Y1, double Z1, double R1, double X2, double Y2, double Z2, double R2)
+{
+	double Dot = (X1*X2 + Y1*Y2 + Z1*Z2);
+	float R = (Dot / (R1 * R2));
+	float angle = ((180 / 3.14159265359)*acos(R));
+	return (float) angle;
+};
 OptiBody::OptiBody()
 {
 	m_hWnd = NULL;
@@ -111,7 +128,7 @@ OptiBody::OptiBody()
 }
 double OptiBody::getData(int JointType0, int JointType1, int Datatype)
 {// 3 digit dataType case:
-//	first digit Limb or Joint {0,1}
+//	first digit Limb, Joint, or angle {0,1,2}
 //	Second Digit F,F',F" {0,1,2}
 //	X,Y,Z,R,T {0,1,2,3,4}.
 	
@@ -270,7 +287,16 @@ double OptiBody::getData(int JointType0, int JointType1, int Datatype)
 		TempData = Joint2Derivative.JointArray[JointType0].T;
 		PointDataMutex.unlock();
 		break;
-
+	case 200:
+		PointDataMutex.lock();
+		TempData = JointAngles[JointType0];
+		PointDataMutex.unlock();
+		break;
+	case 204:
+		PointDataMutex.lock();
+		TempData = Joint[FrameCounters[2]].JointArray[JointType0].T;
+		PointDataMutex.unlock();
+		break;
 	}
 	return TempData;
 }
@@ -306,15 +332,6 @@ void OptiBody::setHWnd(HWND hWnd)
 void OptiBody::setNewDataFlag(BOOL b)
 {
 	DataFlagMutex.lock();
-		
-		//if(NewDataFlag == b && NewDataFlag == 1)
-		//{
-		//	misdatactr++;
-		//}
-		//else if (NewDataFlag == 1 && b == 0) 
-		//{
-		//	misdatactr = 0;
-		//}
 	NewDataFlag = b;
 	DataFlagMutex.unlock();
 }
@@ -327,6 +344,29 @@ BOOL OptiBody::getNewDataFlag(void)
 	return b;
 }
 ;
+void OptiBody::compJointAngle(int joint0)
+{
+	int i1, j1, i2, j2;
+	switch (joint0) {
+	case JointType_SpineMid:
+		i1 = JointType_SpineShoulder;
+		j1 = JointType_SpineMid;
+		i2 = JointType_SpineMid;
+		j2 = JointType_SpineBase;
+		break;
+	}
+	float tempAngle = calculateAngle(
+		Limb[FrameCounters[0]].LimbMap[i1][j1].X,
+		Limb[FrameCounters[0]].LimbMap[i1][j1].Y,
+		Limb[FrameCounters[0]].LimbMap[i1][j1].Z,
+		Limb[FrameCounters[0]].LimbMap[i1][j1].R,
+		Limb[FrameCounters[0]].LimbMap[i2][j2].X,
+		Limb[FrameCounters[0]].LimbMap[i2][j2].Y,
+		Limb[FrameCounters[0]].LimbMap[i2][j2].Z,
+		Limb[FrameCounters[0]].LimbMap[i2][j2].R
+		);
+	JointAngles[joint0] = tempAngle;
+}
 OptiBody::~OptiBody()
 {
 };

@@ -184,18 +184,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case ID_HIPS_ANGLE:
 				
 				GuiApp[HIPSANGLE_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
-				GuiApp[HIPSANGLE_PNUM].setJointTypes(JointType_SpineMid, JointType_SpineBase); // Refer to CBodyBasics::SaveBody for Joint pairs
+				GuiApp[HIPSANGLE_PNUM].setJointTypes(JointType_SpineMid, JointType_SpineMid); // Refer to CBodyBasics::SaveBody for Joint pairs
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
-			//	GUIThread = std::thread(StartGUI,hWnd, message, wParam, lParam);
 				break;
 			case ID_WRISTS_ACCELLERATION:
 				GuiApp[WRISTSACCELL_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
-				GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_WristLeft, JointType_WristLeft);
+				GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_WristRight, JointType_WristRight);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
 			case ID_WRISTS_VELOCITY:
 				GuiApp[WRISTSVELO_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
-				GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_WristLeft, JointType_WristLeft);
+				GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_WristRight, JointType_WristRight);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
             default:
@@ -269,10 +268,10 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (wmId)
 	{
 	case ID_HIPS_ANGLE:
-		GuiApp[HIPSANGLE_PNUM].Datatype = 010;
+		GuiApp[HIPSANGLE_PNUM].Datatype = 200;
 		GuiApp[HIPSANGLE_PNUM].Run(hInst, Show, hDlg, wmId);
 		
-		GuiAppPtr[HIPSANGLE_PNUM] = NewGUI;
+		//GuiAppPtr[HIPSANGLE_PNUM] = NewGUI;
 
 		ToClose[HIPSANGLE_PNUM] = std::this_thread::get_id();
 		break;
@@ -312,6 +311,10 @@ void CloseThread(int PNUM)
 		case WRISTSACCELL_PNUM:
 			GUIThread[WRISTSACCELL_PNUM].join();
 			GUIThread.erase(GUIThread.begin() + WRISTSACCELL_PNUM);
+			break;
+		case WRISTSVELO_PNUM:
+			GUIThread[WRISTSVELO_PNUM].join();
+			GUIThread.erase(GUIThread.begin() + WRISTSVELO_PNUM);
 			break;
 		}
 				//GUIThread[i].join();

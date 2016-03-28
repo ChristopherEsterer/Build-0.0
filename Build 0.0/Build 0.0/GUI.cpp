@@ -29,8 +29,9 @@ float MaptoY(std::deque<double> dataBuf, float MAX, float MIN, double data)
 	double DataMax = *std::max_element(dataBuf.begin(), dataBuf.end());
 	double DataMin = *std::min_element(dataBuf.begin(), dataBuf.end());
 	double DataRange = (DataMax - DataMin);
+	//double ScaleFactor;
 	double PixleRange = (MAX - MIN);
-	if (DataRange == 0) { return 0; }
+	//if (DataRange == 0) { return 0; }
 	double DataNorm = data - DataMin;
 	double T = (((PixleRange / DataRange) * data));
 	return (float)T;
@@ -151,7 +152,7 @@ DWORD GUIApp::Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 	return static_cast<int>(msg.wParam);
 };
 void GUIApp::Update(void)
-{// *** edit
+{
 /*
 Check if UserBody,
 Set TempBody
@@ -170,7 +171,6 @@ Display DataBufer()
 
 	OptiBody* TempBody;
 	TempBody =  (OptiBody*) m_UserBody;
-	//IBodyFrame* pBodyFrame = NULL;
 	if (TempBody->getNewDataFlag())
 	{
 		if (dataBuffer[0].size() < cDataBufferSize)
@@ -179,67 +179,35 @@ Display DataBufer()
 			{
 				m_nStartTime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
 			}
-			
-			//dataBuffer[0].push_back(TempBody->getData(JointType0, JointType1, Datatype));
 			double tempData;
-			
+			double temptime;
 			do {
 				tempData = TempBody->getData(JointType0, JointType1, Datatype);
-			} while (tempData == 0);
-
-			double temptime;// = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
-			do {
 				temptime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
-			} while (temptime == -INFINITY);
+			} while (tempData == 0 || temptime == -INFINITY);
+
 			dataBuffer[0].push_back(tempData);
 			dataBuffer[1].push_back(temptime - m_nStartTime);
-	//		dataBuffer[1].push_back((TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4))) - m_nStartTime);
-
-			//dataBuffer[0].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 4));
-			//dataBuffer[1].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 2));
 		}
-		else {
-			dataBuffer[0].push_back(TempBody->getData(JointType0, JointType1, Datatype));
-			double temptime;// = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
+		else 
+		{
+			double tempData;
+			double temptime;
 			do {
+				tempData = TempBody->getData(JointType0, JointType1, Datatype);
 				temptime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
-			} while (temptime == -INFINITY);
+			} while (tempData == 0 || temptime == -INFINITY);
+
+			dataBuffer[0].push_back(tempData);
 			dataBuffer[1].push_back(temptime - m_nStartTime);
-			//dataBuffer[1].push_back(TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4)));
-			//dataBuffer[0].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 4));
-			//dataBuffer[1].push_back(TempBody->getJointVectorMapData(JointType0, JointType1, 2));		
 			dataBuffer[1].pop_front();
 			dataBuffer[0].pop_front();
 		}
 		TempBody->setNewDataFlag(FALSE);
 	}
-	/*HRESULT hr = m_UserBody->AcquireLatestFrame(&pBodyFrame);
-
-	if (SUCCEEDED(hr))
-	{
-		INT64 nTime = 0;
-
-		hr = pBodyFrame->get_RelativeTime(&nTime);
-
-		IBody* ppBodies[BODY_COUNT] = { 0 };
-
-		if (SUCCEEDED(hr))
-		{
-			hr = pBodyFrame->GetAndRefreshBodyData(_countof(ppBodies), ppBodies);
-		}
-
-		if (SUCCEEDED(hr))
-		{
-			ProcessBody(nTime, BODY_COUNT, ppBodies);
-		}
-
-		for (int i = 0; i < _countof(ppBodies); ++i)
-		{
-			SafeRelease(ppBodies[i]);
-		}
+	else {
+		Sleep(13); // Wait for a frame
 	}
-
-	SafeRelease(pBodyFrame);*/
 	Display();
 	return;
 }
@@ -349,37 +317,19 @@ void GUIApp::Display(void)
 			int width = rct.right;
 			int height = rct.bottom;
 			if (dataBuffer[0].size() != 0) {
-				for (int i = 0; i < dataBuffer[0].size() - 1; i++) {
-
+				for (int i = 0; i < dataBuffer[0].size() - 1; i++)
+				{
 					D2D1_POINT_2F PointTemp;
-					//PointTemp.x = i / dataBuffer[0].size() * width;
-					//PointTemp.y = (float)(dataBuffer[1][i]);
 					PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
-
-					PointTemp.y = /*(height - 80) -*/  ((height - 80)/2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
-					//PointTemp.y = /*(height - 80) -*/ Mapto(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
+					PointTemp.y = ((height - 80)/2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
 					D2D1_POINT_2F PointTemp2;
-					//PointTemp2.x = (i+1) / dataBuffer[0].size() * width;
-					//PointTemp2.y = (float)(dataBuffer[1][i+1]);
 					PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i + 1]);
-
-					PointTemp2.y = /*(height - 80) -*/  ((height - 80)/2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]) ;
-					//PointTemp2.y = /*(height - 80) -*/ Mapto(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]);
-
+					PointTemp2.y = ((height - 80)/2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]) ;
 					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
-
-					//WCHAR szStatusMessage[64];
-					//StringCchPrintf(szStatusMessage, _countof(szStatusMessage), L" Point0 = %0.2f  ,  %0.2f  :Point1 = %0.2f , %0.2f  :Data: %0.2f , %0.2f , %0.2f ", PointTemp.x, PointTemp.y, PointTemp2.x, PointTemp2.y, dataBuffer[1].front(), *std::max_element(dataBuffer.begin(), dataBuffer.end()) , dataBuffer[0].back());
-
-					//if (SetStatusMessage(szStatusMessage, 1000, false))
-					//{
-
-					//}
 				}
 			}
 			D2D1_POINT_2F Point0;
 			D2D1_POINT_2F Point1;
-
 			Point0.x = 0;
 			Point0.y = height - 80;
 			Point1.x = width;
@@ -398,18 +348,6 @@ void GUIApp::Display(void)
 		hr = m_pRenderTarget->EndDraw();
 	}
 
-
-	//glClear(GL_COLOR_BUFFER_BIT);
-	//glColor3f(1.0, 0.0, 0.0);
-	//for (unsigned int i = 0; i < dataBuffer.size(); i++)
-	//{
-	//	glBegin(GL_LINES);
-	//	glVertex2i(150, i*2);
-	//	glVertex2i(150, i*2+15);
-	//	glEnd();
-	//	glRectf(-0.5f, -0.5f, 0.5f, 0.5f);
-	//}
-	//glFlush();
 	
 }
 bool GUIApp::SetStatusMessage(_In_z_ WCHAR* szMessage, DWORD nShowTimeMsec, bool bForce)
