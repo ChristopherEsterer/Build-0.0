@@ -6,7 +6,7 @@
 #include "Build 0.0.h"
 #include "OptiBody.h"	// Alaysis Class
 #include "BodyBasics.h" // Kinect
-
+#include <iostream> //beep
 
 #define MAX_LOADSTRING 100
 #define HIPSANGLE_PNUM 0
@@ -171,6 +171,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             switch (wmId)
             {
             case IDM_ABOUT:
+
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
             case IDM_EXIT:
@@ -226,11 +227,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	//GetDlgItem(hDlg, IDC_);
-
+	
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
     {
     case WM_INITDIALOG:
+	
         return (INT_PTR)TRUE;
 
     case WM_COMMAND:

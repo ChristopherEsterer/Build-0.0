@@ -205,7 +205,7 @@ Display DataBufer()
 		}
 		TempBody->setNewDataFlag(FALSE);
 	}
-	else {
+	else {	
 		Sleep(13); // Wait for a frame
 	}
 	Display();
