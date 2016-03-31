@@ -38,7 +38,6 @@
 #include <shared_mutex> // mutex for OptiBody
 // GUI Class Header
 #include "GUI.h"
-#include "GUISpine.h"
 // Alaysis Class
 #include "OptiBody.h"	
 // Kinect

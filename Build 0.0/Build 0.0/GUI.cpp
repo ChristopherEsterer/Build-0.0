@@ -10,24 +10,23 @@
 static const float c_GraphLineThickness = 3.0f;
 static int C = 0;
 
-
-float GUIApp::MaptoX(std::deque<double>& dataBuf, float& MAX, float& MIN, double& data)
+template<typename TYPE, typename TYPE2, typename TYPE3>
+TYPE2 Mapto(std::deque<TYPE> dataBuf, TYPE2 MAX, TYPE2 MIN, TYPE3 data)
 {
 	//TYPE DataMax = *std::max_element(dataBuf.begin(),dataBuf.end());
 	//TYPE DataMin = *std::min_element(dataBuf.begin(),dataBuf.end());
-	double DataMax = *std::max_element(dataBuf.begin(), dataBuf.end());
-	double DataMin = *std::min_element(dataBuf.begin(), dataBuf.end());
+	TYPE DataMax = *std::max_element(dataBuf.begin(), dataBuf.end());
+	TYPE DataMin = *std::min_element(dataBuf.begin(), dataBuf.end());
 	// add check to min element. getting -inifin
-	double DataRange = (DataMax - DataMin);
+	TYPE2 DataRange = (DataMax - DataMin);
 	if (DataRange == 0) { return 0; }
-	double DataNorm = data - DataMin;
-	double T = ( (DataNorm / (DataRange)) * (MAX - MIN) );
-	return (float)T;
+	TYPE3 DataNorm = data - DataMin;
+	TYPE3 T = ( (DataNorm / (DataRange)) * (MAX - MIN) );
+	return T;
 }
-float GUIApp::MaptoY(std::deque<double>& dataBuf, float& MAX, float& MIN, double& data)
+float MaptoY(std::deque<double> dataBuf, float MAX, float MIN, double data)
 {
 	double DataMax = *std::max_element(dataBuf.begin(), dataBuf.end());
-	//if (DataMax > MaxData) { MaxData = DataMax; }
 	double DataMin = *std::min_element(dataBuf.begin(), dataBuf.end());
 	double DataRange = (DataMax - DataMin);
 	//double ScaleFactor;
@@ -36,7 +35,8 @@ float GUIApp::MaptoY(std::deque<double>& dataBuf, float& MAX, float& MIN, double
 	double DataNorm = data - DataMin;
 	double T = (((PixleRange / DataRange) * data));
 	return (float)T;
-} 
+}
+
 GUIApp::GUIApp() :
 m_hWnd(NULL),
 m_nStartTime(0),
@@ -77,18 +77,15 @@ DWORD GUIApp::Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 	wc.lpfnWndProc = DefDlgProcW;
 	//wc.lpszClassName = GUICLASS1;
 	//wc.lpszClassName = GuiWindowClass;
-	switch (wmId) {
-	case ID_HIPS_ANGLE:
+	switch (C) {
+	case 1:
 		wc.lpszClassName = L"GUIGraphClassWindow1";
 		break;
-	case ID_WRISTS_ACCELLERATION:
+	case 2:
 		wc.lpszClassName = L"GUIGraphClassWindow2";
 		break;
-	case ID_WRISTS_VELOCITY:
+	case 3:
 		wc.lpszClassName = L"GUIGraphClassWindow3";
-		break;
-	case ID_GRAPHS_SPINE:
-		wc.lpszClassName = L"GUIGraphClassSpine";
 		break;
 	default:
 		wc.lpszClassName = L"GUIGraphClassWindow";
@@ -103,69 +100,47 @@ DWORD GUIApp::Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 	}
 
 	// Create main application window
-	int IDD;
-	switch (wmId){
-	case ID_GRAPHS_SPINE:
-		IDD = IDD_GUI_SPINE; // Link to Resource
-		break;
-	default:
-		IDD = IDD_GUI_GRAPH1;
-		break;
-	}
+	/* HWND hWndApp = CreateDialogParamW(
+	NULL,
+	MAKEINTRESOURCE(IDD_APP),
+	NULL,
+	(DLGPROC)GUIApp::MessageRouter,
+	reinterpret_cast<LPARAM>(this)); */
 	HWND hWndApp = CreateDialogParamW(
 		NULL,
-		MAKEINTRESOURCE(IDD), // Link to Resource
+		MAKEINTRESOURCE(IDD_GUI_GRAPH1), // Link to Resource
 		hDlg,
 		(DLGPROC)GUIApp::MessageRouter,
 		reinterpret_cast<LPARAM>(this));
 
+
 	DWORD TEMPE = GetLastError();
 	// Show window
 	ShowWindow(hWndApp, nCmdShow);
+
 	// Main message loop
-	switch (wmId) {
-	case ID_GRAPHS_SPINE:
-		while (WM_QUIT != msg.message)
+	while (WM_QUIT != msg.message)
+	{
+		Update();
+
+		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			Update();
-			while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+			// If a dialog message will be taken care of by the dialog proc
+			if (hWndApp && IsDialogMessageW(hWndApp, &msg))
 			{
-				// If a dialog message will be taken care of by the dialog proc
-				if (hWndApp && IsDialogMessageW(hWndApp, &msg))
-				{
-					continue;
-				}
-				TranslateMessage(&msg);
-				DispatchMessageW(&msg);
+				continue;
 			}
-			while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessageW(&msg);
-			}
+
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
 		}
-		break;
-	default:
-		while (WM_QUIT != msg.message)
+
+		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			Update();
-			while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				// If a dialog message will be taken care of by the dialog proc
-				if (hWndApp && IsDialogMessageW(hWndApp, &msg))
-				{
-					continue;
-				}
-				TranslateMessage(&msg);
-				DispatchMessageW(&msg);
-			}
-			while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessageW(&msg);
-			}
+
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
 		}
-		break;
 	}
 	
 	// Window is closeing, deregister the class.
@@ -230,8 +205,8 @@ Display DataBufer()
 		}
 		TempBody->setNewDataFlag(FALSE);
 	}
-	else {
-		Sleep(20); // Wait for a frame
+	else {	
+		Sleep(13); // Wait for a frame
 	}
 	Display();
 	return;
@@ -264,6 +239,7 @@ void GUIApp::setOptiBodyClass(void* UBC)
 {
 	m_UserBody = UBC;
 }
+;
 LRESULT CALLBACK GUIApp::MessageRouter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	GUIApp* pThis = NULL;
@@ -338,27 +314,26 @@ void GUIApp::Display(void)
 
 			RECT rct;
 			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH), &rct);
-			float width = rct.right - rct.left;
-			float height = rct.bottom - rct.top -58;
-			float zero = 0;
+			int width = rct.right;
+			int height = rct.bottom;
 			if (dataBuffer[0].size() != 0) {
 				for (int i = 0; i < dataBuffer[0].size() - 1; i++)
 				{
 					D2D1_POINT_2F PointTemp;
-					PointTemp.x = MaptoX(dataBuffer[1], width, zero , dataBuffer[1][i]);
-					PointTemp.y = ((height)/2) - MaptoY(dataBuffer[0], (height), zero, dataBuffer[0][i]);
+					PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
+					PointTemp.y = ((height - 80)/2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
 					D2D1_POINT_2F PointTemp2;
-					PointTemp2.x = MaptoX(dataBuffer[1], width, zero, dataBuffer[1][i + 1]);
-					PointTemp2.y = ((height)/2) - MaptoY(dataBuffer[0], (height), zero, dataBuffer[0][i + 1]) ;
+					PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i + 1]);
+					PointTemp2.y = ((height - 80)/2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]) ;
 					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
 				}
 			}
 			D2D1_POINT_2F Point0;
 			D2D1_POINT_2F Point1;
 			Point0.x = 0;
-			Point0.y = height;
+			Point0.y = height - 80;
 			Point1.x = width;
-			Point1.y = height;
+			Point1.y = height - 80;
 			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);
 			Point0.x = 0;
 			Point0.y = Point0.y/2;
@@ -381,8 +356,6 @@ bool GUIApp::SetStatusMessage(_In_z_ WCHAR* szMessage, DWORD nShowTimeMsec, bool
 
 	if (m_hWnd && (bForce || (m_nNextStatusTime <= now)))
 	{
-
-		SetTextColor(GetDC(m_hWnd), 0x00FFFFFF);
 		SetDlgItemText(m_hWnd, IDC_GUI_TEXT, szMessage);
 		m_nNextStatusTime = now + nShowTimeMsec;
 

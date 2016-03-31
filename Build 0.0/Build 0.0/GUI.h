@@ -18,7 +18,7 @@ public:
 	LRESULT CALLBACK			DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	DWORD						Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId);
 	void						Display(void);
-	//bool						SetStatusMessage(WCHAR * szMessage, DWORD nShowTimeMsec, bool bForce);
+	bool						SetStatusMessage(WCHAR * szMessage, DWORD nShowTimeMsec, bool bForce);
 	HRESULT						EnsureDirect2DResources();
 	void						DiscardDirect2DResources();
 	void						Update(void);
@@ -42,7 +42,7 @@ private:
 	int						JointType1;
 	
 	std::array<std::deque<double>,2>			dataBuffer; // 2 data points, one time one value
-	double MaxData = 0;
+
 
 	void*					m_UserBody;
 
@@ -54,9 +54,7 @@ private:
 	ID2D1SolidColorBrush*   m_pBrushGraphLine4;
 	ID2D1SolidColorBrush*   m_pBrushGraphLine5;
 
-	bool                    SetStatusMessage(_In_z_ WCHAR* szMessage, DWORD nShowTimeMsec, bool bForce);
-	float MaptoY(std::deque<double> &dataBuf, float &MAX, float &MIN, double &data);
+	//bool                    SetStatusMessage(_In_z_ WCHAR* szMessage, DWORD nShowTimeMsec, bool bForce);
 
-	float MaptoX(std::deque<double> &dataBuf, float &MAX, float &MIN, double &data);
+
 };
-
