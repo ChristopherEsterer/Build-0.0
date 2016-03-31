@@ -154,6 +154,7 @@
     <ClInclude Include="BodyBasics.h" />
     <ClInclude Include="Build 0.0.h" />
     <ClInclude Include="GUI.h" />
+    <ClInclude Include="GUISpine.h" />
     <ClInclude Include="OptiBody.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="resourcek.h" />
@@ -165,6 +166,7 @@
     <ClCompile Include="BodyBasics.cpp" />
     <ClCompile Include="Build 0.0.cpp" />
     <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="GUISpine.cpp" />
     <ClCompile Include="OptiBody.cpp" />
     <ClCompile Include="OptiBodyStructs.cpp" />
     <ClCompile Include="stdafx.cpp">
