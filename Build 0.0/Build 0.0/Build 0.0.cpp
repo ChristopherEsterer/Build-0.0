@@ -271,7 +271,7 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case ID_HIPS_ANGLE:
 		GuiApp[HIPSANGLE_PNUM].Datatype = 200;
-		GuiApp[HIPSANGLE_PNUM].Run(hInst, Show, hDlg, wmId);
+		GuiApp[HIPSANGLE_PNUM].RunSpine(hInst, Show, hDlg, wmId);
 		
 		//GuiAppPtr[HIPSANGLE_PNUM] = NewGUI;
 

@@ -10,22 +10,30 @@
 
 class GUIApp
 {
+	static const int		cSpinelineLenght = 100;
 	static const int        cDataBufferSize = 100;
 public:
 	GUIApp();
 	~GUIApp();
 	static LRESULT CALLBACK		MessageRouter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK			DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	DWORD						Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId);
-	void						Display(void);
 	bool						SetStatusMessage(WCHAR * szMessage, DWORD nShowTimeMsec, bool bForce);
-	HRESULT						EnsureDirect2DResources();
+	
 	void						DiscardDirect2DResources();
-	void						Update(void);
+	
 	void						setJointTypes(int J0, int J1);
 	void						pushData(double data, double time);
 	void						setOptiBodyClass(void * UBC);
-	
+	// graph
+	DWORD						Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId);
+	void						Update(void);
+	void						Display(void);
+	HRESULT						EnsureDirect2DResources();
+	// spine
+	DWORD						RunSpine(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId);
+	void						UpdateSpine(void);
+	void						DisplaySpine(void);
+	HRESULT						EnsureDirect2DResourcesSpine();
 	int Datatype = 000; // for the getData() call to optibody
 	//void						setOptiBodyClass(OptiBody& UBC);
 private:
