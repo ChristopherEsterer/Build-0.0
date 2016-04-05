@@ -12,6 +12,7 @@
 #define HIPSANGLE_PNUM 0
 #define WRISTSACCELL_PNUM 1
 #define WRISTSVELO_PNUM 2
+#define OPTIFIT_PNUM 3
 #define THREAD_MAX 9
 //Process number linked to: window, thread, and GuiApp itterator ** added
 
@@ -185,17 +186,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			case ID_HIPS_ANGLE:
 				
 				GuiApp[HIPSANGLE_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
-				GuiApp[HIPSANGLE_PNUM].setJointTypes(JointType_SpineMid, JointType_SpineMid); // Refer to CBodyBasics::SaveBody for Joint pairs
+			//	GuiApp[HIPSANGLE_PNUM].setJointTypes(JointType_SpineMid, JointType_SpineMid); // Refer to CBodyBasics::SaveBody for Joint pairs
+				GuiApp[HIPSANGLE_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineBase);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
 			case ID_WRISTS_ACCELLERATION:
 				GuiApp[WRISTSACCELL_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
-				GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_WristRight, JointType_WristRight);
+			//	GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_WristRight, JointType_WristRight);
+				GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
 			case ID_WRISTS_VELOCITY:
 				GuiApp[WRISTSVELO_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
-				GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_WristRight, JointType_WristRight);
+			//	GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_WristRight, JointType_WristRight);
+				GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
+				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
+				break;
+			case ID_OPTIFIT_RUN:
+				GuiApp[OPTIFIT_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
+				GuiApp[OPTIFIT_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
             default:
@@ -270,7 +279,7 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (wmId)
 	{
 	case ID_HIPS_ANGLE:
-		GuiApp[HIPSANGLE_PNUM].Datatype = 200;
+		GuiApp[HIPSANGLE_PNUM].Datatype = 003; // For getData() call to OptiBody
 		GuiApp[HIPSANGLE_PNUM].RunSpine(hInst, Show, hDlg, wmId);
 		
 		//GuiAppPtr[HIPSANGLE_PNUM] = NewGUI;
@@ -278,15 +287,20 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		ToClose[HIPSANGLE_PNUM] = std::this_thread::get_id();
 		break;
 	case ID_WRISTS_ACCELLERATION:
-		GuiApp[WRISTSACCELL_PNUM].Datatype = 121;
+		GuiApp[WRISTSACCELL_PNUM].Datatype = 200; // =121
 		GuiApp[WRISTSACCELL_PNUM].Run(hInst, Show, hDlg, wmId);
 				
 		ToClose[WRISTSACCELL_PNUM] = std::this_thread::get_id();
 	case ID_WRISTS_VELOCITY:
-		GuiApp[WRISTSVELO_PNUM].Datatype = 111;
+		GuiApp[WRISTSVELO_PNUM].Datatype = 201; //=111
 		GuiApp[WRISTSVELO_PNUM].Run(hInst, Show, hDlg, wmId);
 
 		ToClose[WRISTSVELO_PNUM] = std::this_thread::get_id();
+	
+	case ID_OPTIFIT_RUN:
+		GuiApp[OPTIFIT_PNUM].Datatype = 201;
+		GuiApp[OPTIFIT_PNUM].RunSpine(hInst, Show, hDlg, wmId);
+		ToClose[OPTIFIT_PNUM] = std::this_thread::get_id();
 		break;
 }
 		
@@ -317,6 +331,10 @@ void CloseThread(int PNUM)
 		case WRISTSVELO_PNUM:
 			GUIThread[WRISTSVELO_PNUM].join();
 			GUIThread.erase(GUIThread.begin() + WRISTSVELO_PNUM);
+			break;
+		case OPTIFIT_PNUM:
+			GUIThread[OPTIFIT_PNUM].join();
+			GUIThread.erase(GUIThread.begin() + OPTIFIT_PNUM);
 			break;
 		}
 				//GUIThread[i].join();

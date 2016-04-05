@@ -36,6 +36,7 @@
 #include <vector>
 #include <thread>		// multithreading
 #include <shared_mutex> // mutex for OptiBody
+#include <tuple>
 // GUI Class Header
 #include "GUI.h"
 // Alaysis Class

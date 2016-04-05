@@ -41,6 +41,7 @@ public: // Public functions for BodyBasic.cpp to call
 	void setNewDataFlag(BOOL b);
 	BOOL getNewDataFlag(void);
 private:
+
 	// Timing Variables
 	HWND                    m_hWnd;
 	INT64                   m_nStartTime;
@@ -57,13 +58,16 @@ private:
 	//mutable std::mutex EMGDataMutex;
 	//mutable std::mutex ForceDataMutex;
 	// OptiBody Variables
-	std::array<BOOLEAN,4>	FrameCounters; // Each bit n or n+1 for frames
+	std::array<BOOLEAN,6>	FrameCounters; // Each bit n or n+1 for frames
 
-	float calculateAngle(double X1, double Y1, double Z1, double R1, double X2, double Y2, double Z2, double R2);
+	void calculateAngle(double X1, double Y1, double Z1, double R1, double X2, double Y2, double Z2, double R2);
+	void calculateAngle(int i1, int j1, int i2 , int j2, int C);
 	//Limb [0]
 	//Limb1Derivative [1]
 	//Joint [2]
 	//Joint1Derivative [3]
+	//Angle [4]
+	//Angle1Derivative [5]
 
 	// Joint Points and Limb vector Data Structures
 	typedef struct LimbMap_
@@ -102,5 +106,20 @@ private:
 	std::array<JointArray, 2> Joint1Derivative;// two frames n-1 and n
 	JointArray Joint2Derivative;// n of second derivative
 	
-	std::array<float, 26> JointAngles;
+	typedef struct AngleArray_
+	{
+		typedef struct AngleVector_
+		{
+			int TrackingState;
+			float theta;
+			float azimuth;
+			float R; // vector lenght
+			float interval;
+			double T; // TotalTime
+		}AngleVector;
+		std::array<AngleVector, 26> AngleArray;
+	}AngleArray;
+	std::array<AngleArray, 2> Angle;
+	std::array<AngleArray, 2> Angle1Derivative;
+	AngleArray Angle2Derivative;// n of second derivative
 };

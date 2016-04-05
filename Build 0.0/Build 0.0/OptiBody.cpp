@@ -55,6 +55,7 @@ void OptiBody::compDerivative(int JointType0, int JointType1, int c)
  // 0 Limb1st, 1 Limb2nd
  // 2 Joint1st, 3 Joint2nd
 // if Joint, only JointType0 is used.
+// 4 Angle1st, 5 Angle2nd
 
 double dX, dY, dZ;
 	switch (c) {
@@ -104,16 +105,69 @@ double dX, dY, dZ;
 		Joint2Derivative.JointArray[JointType0].Z = dZ;
 		Joint2Derivative.JointArray[JointType0].T = Joint[FrameCounters[3]].JointArray[JointType0].T;
 		break;
+	case 4:
+		interval = (Angle[FrameCounters[4]].AngleArray[JointType0].T - Angle[(!FrameCounters[4])].AngleArray[JointType0].T);
+
+
+		dX = ((Angle[FrameCounters[4]].AngleArray[JointType0].theta - Angle[(!FrameCounters[4])].AngleArray[JointType0].theta) / interval);
+		Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].theta = dX;
+		dY = ((Angle[FrameCounters[4]].AngleArray[JointType0].azimuth - Angle[(!FrameCounters[4])].AngleArray[JointType0].azimuth) / interval);
+		Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].azimuth = dY;
+		dZ = ((Angle[FrameCounters[4]].AngleArray[JointType0].R - Angle[(!FrameCounters[4])].AngleArray[JointType0].R) / interval);
+		Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].R = dZ;
+		Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].T = Angle[(FrameCounters[4])].AngleArray[JointType0].T;
+		break;
+	case 5:
+		interval = (Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].T - Angle1Derivative[!FrameCounters[5]].AngleArray[JointType0].T);
+
+
+		dX = ((Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].theta - Angle1Derivative[!FrameCounters[5]].AngleArray[JointType0].theta) / interval);
+		Angle2Derivative.AngleArray[JointType0].theta = dX;
+		dY = ((Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].azimuth - Angle1Derivative[!FrameCounters[5]].AngleArray[JointType0].azimuth) / interval);
+		Angle2Derivative.AngleArray[JointType0].azimuth = dY;
+		dZ = ((Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].R - Angle1Derivative[!FrameCounters[5]].AngleArray[JointType0].R) / interval);
+		Angle2Derivative.AngleArray[JointType0].R = dZ;
+		Angle2Derivative.AngleArray[JointType0].T = Angle[(FrameCounters[4])].AngleArray[JointType0].T;
+		break;
 	}
 	return;
 }
-float OptiBody::calculateAngle(double X1, double Y1, double Z1, double R1, double X2, double Y2, double Z2, double R2)
+/*OptiBody::AngleVector OptiBody::calculateAngle(double X1, double Y1, double Z1, double R1, double X2, double Y2, double Z2, double R2)
 {
-	double Dot = (X1*X2 + Y1*Y2 + Z1*Z2);
-	float R = (Dot / (R1 * R2));
-	float angle = ((180 / 3.14159265359)*acos(R));
-	return (float) angle;
-};
+	double tx = (X1-X2), ty = (Y1-Y2), tz = (Z1-Z2);
+	double tr = sqrt(tx*tx + ty*ty + tz*tz);
+	//OptiBody::AngleVector TempVector;
+	// Off X axis: theta
+	double Ttheta;
+	Ttheta = acos(tz / tr);
+	// Off Z axis: azimuth
+	double Tazimuth;
+	Tazimuth = atan(ty / tr);
+	
+	//TempVector.azimuth = Tazimuth;
+	//TempVector.theta = Ttheta;
+	//TempVector.R = tr;
+
+	return  TempVector;
+}*/
+void OptiBody::calculateAngle(int i1, int j1, int i2, int j2, int C)
+{
+	
+	double tx = ((Limb[FrameCounters[0]].LimbMap[i1][j1].X) - (Limb[FrameCounters[0]].LimbMap[i2][j2].X));
+	double ty = ((Limb[FrameCounters[0]].LimbMap[i1][j1].Y) - (Limb[FrameCounters[0]].LimbMap[i2][j2].Y));
+	double tz = ((Limb[FrameCounters[0]].LimbMap[i1][j1].Z) - (Limb[FrameCounters[0]].LimbMap[i2][j2].Z));
+	double tr = sqrt(tx*tx + ty*ty + tz*tz);
+	double Ttheta;
+	Ttheta = acos(tz / tr);
+	double Tazimuth;
+	Tazimuth = atan(ty / tr);
+	
+	Angle[FrameCounters[4]].AngleArray[C].theta = Ttheta;
+	Angle[FrameCounters[4]].AngleArray[C].azimuth = Tazimuth;
+	Angle[FrameCounters[4]].AngleArray[C].R = tr;
+	Angle[FrameCounters[4]].AngleArray[C].T = Limb[FrameCounters[0]].LimbMap[i1][j1].T;
+}
+;
 OptiBody::OptiBody()
 {
 	m_hWnd = NULL;
@@ -287,17 +341,70 @@ double OptiBody::getData(int JointType0, int JointType1, int Datatype)
 		TempData = Joint2Derivative.JointArray[JointType0].T;
 		PointDataMutex.unlock();
 		break;
+//JointAngles
 	case 200:
 		PointDataMutex.lock();
-		TempData = JointAngles[JointType0];
+		TempData = (180/ 3.14159265359)*Angle[FrameCounters[4]].AngleArray[JointType0].theta;
+		PointDataMutex.unlock();
+		break;
+	case 201:
+		PointDataMutex.lock();
+		TempData = (180 / 3.14159265359)*Angle[FrameCounters[4]].AngleArray[JointType0].azimuth;
+		PointDataMutex.unlock();
+		break;
+	case 203:
+		PointDataMutex.lock();
+		TempData = Angle[FrameCounters[4]].AngleArray[JointType0].R;
 		PointDataMutex.unlock();
 		break;
 	case 204:
 		PointDataMutex.lock();
-		TempData = Joint[FrameCounters[2]].JointArray[JointType0].T;
+		TempData = Angle[FrameCounters[4]].AngleArray[JointType0].T;
 		PointDataMutex.unlock();
 		break;
-	}
+	case 210:
+		PointDataMutex.lock();
+		TempData = (180 / 3.14159265359)*Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].theta;
+		PointDataMutex.unlock();
+		break;
+	case 211:
+		PointDataMutex.lock();
+		TempData = (180 / 3.14159265359)*Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].azimuth;
+		PointDataMutex.unlock();
+		break;
+	case 213:
+		PointDataMutex.lock();
+		TempData = Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].R;
+		PointDataMutex.unlock();
+		break;
+	case 214:
+		PointDataMutex.lock();
+		TempData = Angle1Derivative[FrameCounters[5]].AngleArray[JointType0].T;
+		PointDataMutex.unlock();
+		break;
+	case 220:
+		PointDataMutex.lock();
+		TempData = (180 / 3.14159265359)*Angle2Derivative.AngleArray[JointType0].theta;
+		PointDataMutex.unlock();
+		break;
+	case 221:
+		PointDataMutex.lock();
+		TempData = (180 / 3.14159265359)*Angle2Derivative.AngleArray[JointType0].azimuth;
+		PointDataMutex.unlock();
+		break;
+	case 223:
+		PointDataMutex.lock();
+		TempData = Angle2Derivative.AngleArray[JointType0].R;
+		PointDataMutex.unlock();
+		break;
+	case 224:
+		PointDataMutex.lock();
+		TempData = Angle2Derivative.AngleArray[JointType0].T;
+		PointDataMutex.unlock();
+		break;
+
+}
+
 	return TempData;
 }
 double OptiBody::getJointData(int JointType0, int Datatype)
@@ -353,19 +460,39 @@ void OptiBody::compJointAngle(int joint0)
 		j1 = JointType_SpineMid;
 		i2 = JointType_SpineMid;
 		j2 = JointType_SpineBase;
+		calculateAngle(i1,j1,i2,j2,JointType_SpineMid);
 		break;
+	case JointType_SpineBase:
+		i1 = JointType_SpineMid;
+		j1 = JointType_SpineBase;
+		i2 = JointType_HipRight;
+		j2 = JointType_KneeRight;
+		calculateAngle(i1, j1, i2, j2, JointType_SpineBase);
+		break;
+	case JointType_KneeLeft:
+		i1 = JointType_HipLeft;
+		j1 = JointType_KneeLeft;
+		i2 = JointType_KneeLeft;
+		j2 = JointType_AnkleLeft;
+		calculateAngle(i1, j1, i2, j2, JointType_KneeLeft);
+		break;
+	case JointType_KneeRight:
+		i1 = JointType_HipRight;
+		j1 = JointType_KneeRight;
+		i2 = JointType_KneeRight;
+		j2 = JointType_AnkleRight;
+		calculateAngle(i1, j1, i2, j2, JointType_KneeRight);
+		break;
+	case JointType_SpineShoulder:
+		i1 = JointType_SpineShoulder;
+		j1 = JointType_ShoulderRight;
+		i2 = JointType_SpineShoulder;
+		j2 = JointType_SpineMid;
+		calculateAngle(i1, j1, i2, j2, JointType_SpineShoulder);
+		break;
+
 	}
-	float tempAngle = calculateAngle(
-		Limb[FrameCounters[0]].LimbMap[i1][j1].X,
-		Limb[FrameCounters[0]].LimbMap[i1][j1].Y,
-		Limb[FrameCounters[0]].LimbMap[i1][j1].Z,
-		Limb[FrameCounters[0]].LimbMap[i1][j1].R,
-		Limb[FrameCounters[0]].LimbMap[i2][j2].X,
-		Limb[FrameCounters[0]].LimbMap[i2][j2].Y,
-		Limb[FrameCounters[0]].LimbMap[i2][j2].Z,
-		Limb[FrameCounters[0]].LimbMap[i2][j2].R
-		);
-	JointAngles[joint0] = tempAngle;
+
 }
 OptiBody::~OptiBody()
 {

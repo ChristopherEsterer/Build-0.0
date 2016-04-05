@@ -34,7 +34,8 @@ float MaptoY(std::deque<double> dataBuf, float MAX, float MIN, double data)
 	double PixleRange = (MAX - MIN);
 	//if (DataRange == 0) { return 0; }
 	double DataNorm = data - DataMin;
-	double T = (((PixleRange / DataRange) * data));
+	//double T = (((PixleRange / DataRange) * data));
+	double T = ((PixleRange / DataRange) * DataNorm);
 	return (float)T;
 }
 
@@ -359,7 +360,7 @@ DWORD GUIApp::RunSpine(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 		DWORD TEMPE = GetLastError();
 		// Show window
 		ShowWindow(hWndApp, nCmdShow);
-
+		Logfile = std::ofstream("log.csv");
 		// Main message loop
 		while (WM_QUIT != msg.message)
 		{
@@ -408,45 +409,66 @@ void GUIApp::UpdateSpine(void)
 	{
 		return;
 	}
+	// To analyze the spine we need to look at multiple variables at once.
+	// Multiple DataBuffers: HipsJointAngle,HipJointAngleV,KneeJointAngle, KneeJointAngleV, HipsYVelocity, WristYAcceleration.
+	// Array of getData Codes for each Var
+	// Make sure each Var is getting Calculated.
+	// Analyse
+	// Save to file
+	//
 	OptiBody* TempBody;
 	TempBody = (OptiBody*)m_UserBody;
 	if (TempBody->getNewDataFlag())
 	{
-		if (dataBuffer[0].size() < cDataBufferSize)
+		if (dataBufferSpine[0][1].size() == 0)
 		{
-			if (dataBuffer[1].size() == 0)
+			m_nStartTime = TempBody->getData(0, 0, 104);
+		}
+		for (int i = 0; i < dataBufferSpine.size(); i++)
+		{
+			if (dataBufferSpine[i][0].size() < cDataBufferSize)
 			{
-				m_nStartTime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
+				double tempData;
+				double temptime;
+				int tj0;
+				int tj1;
+				int tDt;
+				do {
+					tj0 = std::get<0>(SpineGetMap(i));tj1 = std::get<1>(SpineGetMap(i));tDt = std::get<2>(SpineGetMap(i));
+					tempData = TempBody->getData(tj0, tj1, tDt);
+					temptime = TempBody->getData(tj0, tj1, (tDt - (tDt % 10) + 4));
+				} while (tempData == 0 || temptime == -INFINITY);
+
+				dataBufferSpine[i][0].push_back(tempData);
+				dataBufferSpine[i][1].push_back(temptime - m_nStartTime);
 			}
-			double tempData;
-			double temptime;
-			do {
-				tempData = TempBody->getData(JointType0, JointType1, Datatype);
-				temptime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
-			} while (tempData == 0 || temptime == -INFINITY);
+			else
+			{
+				double tempData;
+				double temptime;
+				int tj0;
+				int tj1;
+				int tDt;
+				do {
+					tj0 = std::get<0>(SpineGetMap(i)); tj1 = std::get<1>(SpineGetMap(i)); tDt = std::get<2>(SpineGetMap(i));
+					tempData = TempBody->getData(tj0, tj1, tDt);
+					temptime = TempBody->getData(tj0, tj1, (tDt - (tDt % 10) + 4));
+				} while (tempData == 0 || temptime == -INFINITY);
 
-			dataBuffer[0].push_back(tempData);
-			dataBuffer[1].push_back(temptime - m_nStartTime);
+				dataBufferSpine[i][0].push_back(tempData);
+				dataBufferSpine[i][1].push_back(temptime - m_nStartTime);
+				dataBufferSpine[i][1].pop_front();
+				dataBufferSpine[i][0].pop_front();
+			}
 		}
-		else
-		{
-			double tempData;
-			double temptime;
-			do {
-				tempData = TempBody->getData(JointType0, JointType1, Datatype);
-				temptime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
-			} while (tempData == 0 || temptime == -INFINITY);
-
-			dataBuffer[0].push_back(tempData);
-			dataBuffer[1].push_back(temptime - m_nStartTime);
-			dataBuffer[1].pop_front();
-			dataBuffer[0].pop_front();
-		}
+		SaveSpineBuffer();
+	//	f_dataSaved = false;
 		TempBody->setNewDataFlag(FALSE);
 	}
 	else {
-		Sleep(13); // Wait for a frame
+			Sleep(15); // Wait for a frame
 	}
+
 	DisplaySpine();
 	return;
 }
@@ -460,25 +482,37 @@ void GUIApp::DisplaySpine(void)
 		{
 			m_pRenderTarget->BeginDraw();
 			m_pRenderTarget->Clear();
-			ID2D1SolidColorBrush* Brush = m_pBrushGraphLine;
+			ID2D1SolidColorBrush* Brush = m_pBrushGraphLine5;
 			RECT rct;
 			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_SPINE), &rct);
 			int width = rct.right - 90;
 			int height = rct.bottom - 80;
-			if (!dataBuffer[0].empty())
+			if (!dataBufferSpine[0][0].empty())
 			{
-			D2D1_POINT_2F Point0;
-			D2D1_POINT_2F Point1;
-			Point0.x = width / 2;
-			Point0.y = height / 2;
-			Point1.x = width / 2 + ((cSpinelineLenght)*cos((3.14159265359/180)*dataBuffer[0].back()));
-			Point1.y = height / 2 + ((cSpinelineLenght)*sin((3.14159265359 / 180)*dataBuffer[0].back()));
-			m_pRenderTarget->DrawLine(Point0, Point1, Brush, c_SpineLineThickness);
-			Point0.x = width / 2;
-			Point0.y = height / 2;
-			Point1.x = width / 2;
-			Point1.y = height / 2 + cSpinelineLenght;
-			m_pRenderTarget->DrawLine(Point0, Point1, Brush, c_SpineLineThickness);
+			//	FormPoints = HipsYVHipAngV();
+			//	FormPoints = KneeAngVHipAngV();
+			//	FormPoints = KneeAngHipAng();
+				CheckLiftPos();
+				FormPoints = FormPoints+KneeAngV();
+
+				if (FormPoints >=4) {
+					D2D1_POINT_2F Point0;
+					Point0.x = (width / 2);
+					Point0.y = (height / 2);
+					D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, 45.0F, 45.0F);
+					m_pRenderTarget->FillEllipse(ellipse, Brush);
+
+					
+					//D2D1_POINT_2F Point1;
+					//Point0.x = (width / 2) + (cSpinelineLenght);
+					//Point0.y = (height / 2) + (cSpinelineLenght / 2);
+					////Point1.x = width / 2 + ((cSpinelineLenght)*cos((3.14159265359/180)*dataBuffer[0].back()));
+					////Point1.y = height / 2 + ((cSpinelineLenght)*sin((3.14159265359 / 180)*dataBuffer[0].back()));
+					//Point1.x = (width / 2) + (cSpinelineLenght);
+					//Point1.y = (height / 2) - (cSpinelineLenght / 2);
+					//m_pRenderTarget->DrawLine(Point0, Point1, Brush, c_SpineLineThickness);
+				}
+				//FormPoints = 0;
 			}
 		hr = m_pRenderTarget->EndDraw();
 		}
@@ -529,6 +563,105 @@ HRESULT GUIApp::EnsureDirect2DResourcesSpine()
 	}
 
 	return hr;
+}
+std::tuple<int,int,int> GUIApp::SpineGetMap(int i)
+{
+	switch (i) {
+	case SpineData_HipAngle:
+		return std::make_tuple(JointType_SpineBase, JointType_SpineBase,200);
+	case SpineData_HipAngleVelo:
+		return std::make_tuple(JointType_SpineBase, JointType_SpineBase,210);
+	case SpineData_KneeAngle:
+		return std::make_tuple(JointType_KneeRight, JointType_KneeRight,200);
+	case SpineData_KneeAngleVelo:
+		return std::make_tuple(JointType_KneeRight, JointType_KneeRight,210);
+	case SpineData_HipsYVelo:
+		return std::make_tuple(JointType_SpineBase, JointType_SpineBase,111);
+	case SpineData_WristYAccel:
+		return std::make_tuple(JointType_WristRight, JointType_WristRight,121);
+	case SpineData_WristYPos:
+		return std::make_tuple(JointType_WristRight, JointType_WristRight, 101);
+	}
+
+	
+}
+void GUIApp::SaveSpineBuffer(void)
+{
+	
+	Logfile.open("log.csv", std::ios_base::app);
+	if (Logfile.is_open())
+	{
+		double t0, t1, t2, t3, t4, t5,t6,tt;
+		tt = dataBufferSpine[SpineData_HipAngle][1].back();
+		t0 = dataBufferSpine[SpineData_HipAngle][0].back();
+		t1 = dataBufferSpine[SpineData_HipAngleVelo][0].back();
+		t2 = dataBufferSpine[SpineData_KneeAngle][0].back();
+		t3 = dataBufferSpine[SpineData_KneeAngleVelo][0].back();
+		t4 = dataBufferSpine[SpineData_HipsYVelo][0].back();
+		t5 = dataBufferSpine[SpineData_WristYAccel][0].back();
+		t6 = dataBufferSpine[SpineData_WristYPos][0].back();
+		Logfile << tt << "," << t0 << "," << t1 << "," << t2 << "," << t3 << "," << t4 << "," << t5 << "," << t6 << ",\n";
+		Logfile.close();
+		f_dataSaved = true;
+	}
+}
+void GUIApp::CheckLiftPos(void)
+{
+	if (dataBufferSpine[SpineData_WristYPos][0].back() < WristMin) 
+	{
+		WristMin = dataBufferSpine[SpineData_WristYPos][0].back();
+	}	
+	if (dataBufferSpine[SpineData_WristYPos][0].back() > WristMax) {
+		WristMax = dataBufferSpine[SpineData_WristYPos][0].back();
+	}
+
+
+	if (abs(dataBufferSpine[SpineData_WristYPos][0].back() - WristMax) < (0.01)) {
+		liftState = 1;
+	}
+	
+	if (abs(dataBufferSpine[SpineData_WristYPos][0].back() - WristMin) < (0.01)) {
+	
+		if (liftState = 1)
+		{
+			liftState = 0; LiftCount++; FormPoints = 0;
+		}
+		else {
+			liftState = 0;
+		};
+	}
+}
+int GUIApp::HipsYVHipAngV(void)
+{
+	if (dataBufferSpine[SpineData_HipsYVelo][0].back() > dataBufferSpine[SpineData_HipAngleVelo][0].back()) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+	
+}
+int GUIApp::KneeAngVHipAngV(void)
+{
+	if ((dataBufferSpine[SpineData_KneeAngleVelo][0].back() - dataBufferSpine[SpineData_HipAngleVelo][0].back()) > 0) {
+		return 1;
+	}
+	else { return 0; }
+}
+int GUIApp::KneeAngHipAng(void)
+{
+	if (dataBufferSpine[SpineData_KneeAngle][0].back() < dataBufferSpine[SpineData_HipAngle][0].back()) {
+		return 1;
+	}
+	else { return 0; }
+}
+int GUIApp::KneeAngV(void)
+{
+	if (abs(dataBufferSpine[SpineData_KneeAngleVelo][0].back()) > 4E-5 ) {
+		return 1;
+	}
+	else { return 0; }
+	return 0;
 }
 // Run Force
 

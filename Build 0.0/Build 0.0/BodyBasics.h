@@ -148,6 +148,8 @@ private:
 	void					ComputeLimbVector(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double time, JointType joint0, JointType joint1);
 	void					ComputeLimbDerivative(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0, JointType joint1);
 	void					ComputeJointDerivative(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, JointType joint0);
+
+	void ComputeAngleDerivative(const Joint * pJoints, const D2D1_POINT_2F * pJointPoints, JointType joint0);
 	
 	void					SaveJointPoint(const Joint* pJoints, const D2D1_POINT_2F* pJointPoints, double time, JointType joint0);
 	

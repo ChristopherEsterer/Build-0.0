@@ -681,6 +681,7 @@ void CBodyBasics::SaveBody(const Joint* pJoints, const D2D1_POINT_2F* pJointPoin
 	ComputeLimbVector(pJoints, pJointPoints, time, JointType_Neck, JointType_SpineShoulder);
 	ComputeLimbVector(pJoints, pJointPoints, time, JointType_SpineShoulder, JointType_SpineMid);
 	ComputeLimbVector(pJoints, pJointPoints, time, JointType_SpineMid, JointType_SpineBase);
+	ComputeLimbVector(pJoints, pJointPoints, time, JointType_SpineShoulder, JointType_SpineBase); // ***
 	ComputeLimbVector(pJoints, pJointPoints, time, JointType_SpineShoulder, JointType_ShoulderRight);
 	ComputeLimbVector(pJoints, pJointPoints, time, JointType_SpineShoulder, JointType_ShoulderLeft);
 	ComputeLimbVector(pJoints, pJointPoints, time, JointType_SpineBase, JointType_HipRight);
@@ -720,12 +721,12 @@ void CBodyBasics::AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointP
 
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_Head);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_Neck);
-	//ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineShoulder);
-	//ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineMid);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineShoulder);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineMid);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineBase);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_ShoulderRight);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_ShoulderLeft);
-	//ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineBase);
+	ComputeJointDerivative(pJoints, pJointPoints, JointType_SpineBase);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_HipRight);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_HipLeft);
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_ElbowRight);
@@ -746,6 +747,16 @@ void CBodyBasics::AnalyseBody(const Joint* pJoints, const D2D1_POINT_2F* pJointP
 	//ComputeJointDerivative(pJoints, pJointPoints, JointType_FootLeft);
 
 	UserBody.compJointAngle(JointType_SpineMid);
+	ComputeAngleDerivative(pJoints, pJointPoints, JointType_SpineMid);
+	UserBody.compJointAngle(JointType_SpineBase);
+	ComputeAngleDerivative(pJoints, pJointPoints, JointType_SpineBase);
+	UserBody.compJointAngle(JointType_KneeLeft);
+	ComputeAngleDerivative(pJoints, pJointPoints, JointType_KneeLeft);
+	UserBody.compJointAngle(JointType_KneeRight);
+	ComputeAngleDerivative(pJoints, pJointPoints, JointType_KneeRight);
+	UserBody.compJointAngle(JointType_SpineShoulder);
+	ComputeAngleDerivative(pJoints, pJointPoints, JointType_SpineShoulder);
+
 	// Torso
 	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_Head, JointType_Neck);
 	//ComputeLimbDerivative(pJoints, pJointPoints, JointType_Neck, JointType_SpineShoulder);
@@ -873,6 +884,36 @@ void CBodyBasics::ComputeJointDerivative(const Joint * pJoints, const D2D1_POINT
 	{
 		UserBody.compDerivative(joint0, joint0, 2);
 		UserBody.compDerivative(joint0, joint0, 3);
+	}
+
+}
+void CBodyBasics::ComputeAngleDerivative(const Joint * pJoints, const D2D1_POINT_2F * pJointPoints, JointType joint0)
+{
+	TrackingState joint0State = pJoints[joint0].TrackingState;
+
+
+	// If we can't find either of these joints, exit
+	if (joint0State == TrackingState_NotTracked)
+	{ // We need to flag this for derivative. so we dont get crazy peak accel
+		return;
+	}
+
+	// Don't draw if both points are inferred
+	if (joint0State == TrackingState_Inferred)
+	{// We need to flag this for derivative. so we dont get crazy peak accel
+		return;
+	}
+
+	// We assume all drawn bones are inferred unless BOTH joints are tracked
+	if (joint0State == TrackingState_Tracked)
+	{// Put the Functoin call here // *** ***
+		UserBody.compDerivative(joint0, joint0, 4);
+		UserBody.compDerivative(joint0, joint0, 5);
+	}
+	else
+	{
+		UserBody.compDerivative(joint0, joint0, 4);
+		UserBody.compDerivative(joint0, joint0, 5);
 	}
 
 }

@@ -2,14 +2,19 @@
   AppManager.cpp
   BodyBasics.cpp
   Build 0.0.cpp
-Build 0.0.cpp(67): warning C4101: 'lpMsg': unreferenced local variable
+Build 0.0.cpp(68): warning C4101: 'lpMsg': unreferenced local variable
   GUI.cpp
-GUI.cpp(230): warning C4018: '<': signed/unsigned mismatch
+GUI.cpp(232): warning C4018: '<': signed/unsigned mismatch
   OptiBody.cpp
 OptiBody.cpp(44): warning C4018: '<': signed/unsigned mismatch
   OptiBodyStructs.cpp
 OptiBodyStructs.cpp(84): warning C4094: untagged 'struct' declared no symbols
 OptiBodyStructs.cpp(94): warning C4094: untagged 'struct' declared no symbols
 OptiBodyStructs.cpp(124): warning C4094: untagged 'struct' declared no symbols
-GUI.obj : error LNK2001: unresolved external symbol "public: void __thiscall GUIApp::UpdateSpine(void)" (?UpdateSpine@GUIApp@@QAEXXZ)
-C:\Users\est_f_000\Documents\Omaro\Programs\Build 0.0\Build-0.0\Build 0.0\Release\Build 0.0.exe : fatal error LNK1120: 1 unresolved externals
+  Wireless.cpp
+  Generating code
+  0 of 662 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    34 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Build 0.0.vcxproj -> C:\Users\est_f_000\Documents\Omaro\Programs\Build 0.0\Build-0.0\Build 0.0\Release\Build 0.0.exe
