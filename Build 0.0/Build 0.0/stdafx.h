@@ -47,7 +47,8 @@
 #include "BodyBasics.h"
 // OptiBody Class Header
 #include "OptiBody.h"
-
+// Wireless Class header
+#include "Wireless.h"
 
 
 #pragma comment (lib, "d2d1.lib")

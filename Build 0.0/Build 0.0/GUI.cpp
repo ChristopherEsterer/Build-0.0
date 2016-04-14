@@ -38,7 +38,19 @@ float MaptoY(std::deque<double> dataBuf, float MAX, float MIN, double data)
 	double T = ((PixleRange / DataRange) * DataNorm);
 	return (float)T;
 }
-
+float MaptoYEMG(std::deque<double> dataBuf, float MAX, float MIN, double data)
+{
+	double DataMax = *std::max_element(dataBuf.begin(), dataBuf.end());
+	double DataMin = *std::min_element(dataBuf.begin(), dataBuf.end());
+	double DataRange = (DataMax - DataMin);
+	//double ScaleFactor;
+	double PixleRange = (MAX - MIN);
+	//if (DataRange == 0) { return 0; }
+	double DataNorm = data - DataMin;
+	//double T = (((PixleRange / DataRange) * data));
+	double T = ((PixleRange / 1000) * data);
+	return (float)T;
+}
 GUIApp::GUIApp() :
 m_hWnd(NULL),
 m_nStartTime(0),
@@ -233,7 +245,7 @@ void GUIApp::Display(void)
 				{
 					D2D1_POINT_2F PointTemp;
 					PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
-					PointTemp.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
+					PointTemp.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, (dataBuffer[0][i]));
 					D2D1_POINT_2F PointTemp2;
 					PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i + 1]);
 					PointTemp2.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]);
@@ -324,13 +336,13 @@ DWORD GUIApp::RunSpine(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 		wc.lpfnWndProc = DefDlgProcW;
 		switch (C) {
 		case 1:
-			wc.lpszClassName = L"GUIGraphClassSpine";
+			wc.lpszClassName = L"GUIGraphSpine";
 			break;
 		case 2:
-			wc.lpszClassName = L"GUIGraphClassWindow2";
+			wc.lpszClassName = L"GUIGraphSpine";
 			break;
 		case 3:
-			wc.lpszClassName = L"GUIGraphClassWindow3";
+			wc.lpszClassName = L"GUIGraphSpine";
 			break;
 		default:
 			wc.lpszClassName = L"GUIGraphSpine";
@@ -663,8 +675,540 @@ int GUIApp::KneeAngV(void)
 	else { return 0; }
 	return 0;
 }
-// Run Force
+// Run EMG
+DWORD GUIApp::RunEMG(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
+{
 
+	MSG       msg = { 0 };
+	WNDCLASS  wc;
+
+	// Dialog custom window class
+	ZeroMemory(&wc, sizeof(wc));
+
+	wc.style = CS_HREDRAW | CS_VREDRAW;
+	wc.cbWndExtra = DLGWINDOWEXTRA;
+	wc.hCursor = LoadCursorW(NULL, IDC_ARROW);
+	//wc.hIcon = LoadIconW(hInstance, MAKEINTRESOURCE(IDI_APP));//***
+	//	wc.hIcon = LoadIconW(NULL, NULL);//***
+	//	wc.hIcon = LoadIconW(hInstance, nCmdShow);//***
+	wc.lpfnWndProc = DefDlgProcW;
+	//wc.lpszClassName = GUICLASS1;
+	//wc.lpszClassName = GuiWindowClass;
+	switch (C) {
+	case 1:
+		wc.lpszClassName = L"GUIGraphEMG";
+		break;
+	case 2:
+		wc.lpszClassName = L"GUIGraphEMG";
+		break;
+	case 3:
+		wc.lpszClassName = L"GUIGraphEMG";
+		break;
+	default:
+		wc.lpszClassName = L"GUIGraphEMG";
+		break;
+	}
+	C++;
+	//wc.lpszClassName = L"GUIGraphClassWindow";
+
+	if (!RegisterClassW(&wc))
+	{
+		return 0;
+	}
+
+	// Create main application window
+	/* HWND hWndApp = CreateDialogParamW(
+	NULL,
+	MAKEINTRESOURCE(IDD_APP),
+	NULL,
+	(DLGPROC)GUIApp::MessageRouter,
+	reinterpret_cast<LPARAM>(this)); */
+	HWND hWndApp = CreateDialogParamW(
+		NULL,
+		MAKEINTRESOURCE(IDD_GUI_EMG), // Link to Resource
+		hDlg,
+		(DLGPROC)GUIApp::MessageRouter,
+		reinterpret_cast<LPARAM>(this));
+
+
+	DWORD TEMPE = GetLastError();
+	// Show window
+	ShowWindow(hWndApp, nCmdShow);
+
+	// Main message loop
+	while (WM_QUIT != msg.message)
+	{
+		UpdateEMG();
+
+		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			// If a dialog message will be taken care of by the dialog proc
+			if (hWndApp && IsDialogMessageW(hWndApp, &msg))
+			{
+				continue;
+			}
+
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
+
+		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
+	}
+
+	// Window is closeing, deregister the class.
+	if (!UnregisterClassW(wc.lpszClassName, wc.hInstance))
+	{
+		return 0;
+	}
+	C--;
+	return static_cast<int>(msg.wParam);
+};
+void GUIApp::UpdateEMG(void)
+{
+	/*
+	Check if UserBody,
+	Set TempBody
+	Case buffer size
+	Ask TempBody For data (lock)
+	Receive Data from Tempbody (unlock/return)
+	Put data point into buffer
+	Display DataBufer()
+
+	*/
+
+	if (!m_WireLess)
+	{
+		return;
+	}
+
+	Wireless* TempBody;
+	TempBody = (Wireless*)m_WireLess;
+	if (TempBody->getNewDataFlagEMG())
+	{
+		if (dataBufferEMG[0].size() < cDataBufferSize)
+		{
+
+			double tempData;
+			double temptime;
+			do {
+				tempData = TempBody->getData(EMG_itr);
+				temptime = TempBody->getData(EMGTime_itr);
+			} while (tempData == 0 || temptime == -INFINITY);
+			
+			if (dataBufferEMG[1].size() == 0)
+			{
+				m_nStartTime = temptime;
+			}
+
+
+			dataBufferEMG[0].push_back(tempData);
+			dataBufferEMG[1].push_back(temptime - m_nStartTime);
+		}
+		else
+		{
+			double tempData;
+			double temptime;
+			do {
+				tempData = TempBody->getData(EMG_itr);
+				temptime = TempBody->getData(EMGTime_itr);
+			} while (tempData == 0 || temptime == -INFINITY);
+
+			dataBufferEMG[0].push_back(tempData);
+			dataBufferEMG[1].push_back(temptime - m_nStartTime);
+			dataBufferEMG[1].pop_front();
+			dataBufferEMG[0].pop_front();
+		}
+		TempBody->setNewDataFlagEMG(FALSE);
+	}
+	else {
+		Sleep(13); // Wait for a frame
+	}
+	DisplayEMG();
+	return;
+}
+void GUIApp::DisplayEMG(void)
+{
+	if (m_hWnd)
+	{
+		HRESULT hr = EnsureDirect2DResourcesEMG();
+
+		if (SUCCEEDED(hr) && m_pRenderTarget)
+		{
+			m_pRenderTarget->BeginDraw();
+			m_pRenderTarget->Clear();
+
+			RECT rct;
+			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_EMG), &rct);
+			int width = rct.right;
+			int height = rct.bottom;
+			if (dataBufferEMG[0].size() != 0) {
+				for (int i = 0; i < dataBufferEMG[0].size() - 1; i++)
+				{
+					D2D1_POINT_2F PointTemp;
+					PointTemp.x = Mapto(dataBufferEMG[1], width, 0, dataBufferEMG[1][i]);
+					PointTemp.y = ((height - 81)/2) - MaptoYEMG(dataBufferEMG[0], (height - 81), 0, dataBufferEMG[0][i]-244);
+					D2D1_POINT_2F PointTemp2;
+					PointTemp2.x = Mapto(dataBufferEMG[1], width, 0, dataBufferEMG[1][i + 1]);
+					PointTemp2.y = ((height - 81)/2) - MaptoYEMG(dataBufferEMG[0], (height - 81), 0, dataBufferEMG[0][i + 1]-244);
+					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
+				}
+			}
+			D2D1_POINT_2F Point0;
+			D2D1_POINT_2F Point1;
+			Point0.x = 0;
+			Point0.y = height - 80;
+			Point1.x = width;
+			Point1.y = height - 80;
+			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);
+			Point0.x = 0;
+			Point0.y = Point0.y / 2;
+			Point1.x = width;
+			Point1.y = Point1.y / 2;
+			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine4, c_GraphLineThickness);
+		}
+		else {
+			
+		}
+
+		hr = m_pRenderTarget->EndDraw();
+	}
+
+
+}
+HRESULT GUIApp::EnsureDirect2DResourcesEMG()
+{
+	HRESULT hr = S_OK;
+
+	if (m_pD2DFactory && !m_pRenderTarget)
+	{
+		RECT rc;
+		GetWindowRect(GetDlgItem(m_hWnd, IDC_GRAPH_EMG), &rc);
+
+		int width = rc.right - rc.left;
+		int height = rc.bottom - rc.top;
+		D2D1_SIZE_U size = D2D1::SizeU(width, height);
+		D2D1_RENDER_TARGET_PROPERTIES rtProps = D2D1::RenderTargetProperties();
+		rtProps.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE);
+		rtProps.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
+
+		// Create a Hwnd render target, in order to render to the window set in initialize
+		hr = m_pD2DFactory->CreateHwndRenderTarget(
+			rtProps,
+			D2D1::HwndRenderTargetProperties(GetDlgItem(m_hWnd, IDC_GRAPH_EMG), size),
+			&m_pRenderTarget
+			);
+
+		if (FAILED(hr))
+		{
+			SetStatusMessage(L"Couldn't create Direct2D render target!", 10000, true);
+			return hr;
+		}
+
+		// light green
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.27f, 0.75f, 0.27f), &m_pBrushJointTracked);
+
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 1.0f), &m_pBrushJointInferred);
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 1.0f), &m_pBrushBoneTracked);
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 1.0f), &m_pBrushBoneInferred);
+
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red, 0.5f), &m_pBrushHandClosed);
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 0.5f), &m_pBrushHandOpen);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red, 0.5f), &m_pBrushGraphLine);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 0.5f), &m_pBrushGraphLine2);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Blue, 0.5f), &m_pBrushGraphLine3);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Purple, 0.5f), &m_pBrushGraphLine4);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 0.5f), &m_pBrushGraphLine5);
+
+	}
+
+	return hr;
+}
+// Run Force
+DWORD GUIApp::RunForce(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
+{
+
+	MSG       msg = { 0 };
+	WNDCLASS  wc;
+
+	// Dialog custom window class
+	ZeroMemory(&wc, sizeof(wc));
+
+	wc.style = CS_HREDRAW | CS_VREDRAW;
+	wc.cbWndExtra = DLGWINDOWEXTRA;
+	wc.hCursor = LoadCursorW(NULL, IDC_ARROW);
+	//wc.hIcon = LoadIconW(hInstance, MAKEINTRESOURCE(IDI_APP));//***
+	//	wc.hIcon = LoadIconW(NULL, NULL);//***
+	//	wc.hIcon = LoadIconW(hInstance, nCmdShow);//***
+	wc.lpfnWndProc = DefDlgProcW;
+	//wc.lpszClassName = GUICLASS1;
+	//wc.lpszClassName = GuiWindowClass;
+	switch (C) {
+	case 1:
+		wc.lpszClassName = L"GUIGraphForce";
+		break;
+	case 2:
+		wc.lpszClassName = L"GUIGraphForce";
+		break;
+	case 3:
+		wc.lpszClassName = L"GUIGraphForce";
+		break;
+	default:
+		wc.lpszClassName = L"GUIGraphForce";
+		break;
+	}
+	C++;
+	//wc.lpszClassName = L"GUIGraphClassWindow";
+
+	if (!RegisterClassW(&wc))
+	{
+		return 0;
+	}
+
+	// Create main application window
+	/* HWND hWndApp = CreateDialogParamW(
+	NULL,
+	MAKEINTRESOURCE(IDD_APP),
+	NULL,
+	(DLGPROC)GUIApp::MessageRouter,
+	reinterpret_cast<LPARAM>(this)); */
+	HWND hWndApp = CreateDialogParamW(
+		NULL,
+		MAKEINTRESOURCE(IDD_GUI_FORCE), // Link to Resource
+		hDlg,
+		(DLGPROC)GUIApp::MessageRouter,
+		reinterpret_cast<LPARAM>(this));
+
+
+	DWORD TEMPE = GetLastError();
+	// Show window
+	ShowWindow(hWndApp, nCmdShow);
+
+	// Main message loop
+	while (WM_QUIT != msg.message)
+	{
+		UpdateForce();
+
+		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			// If a dialog message will be taken care of by the dialog proc
+			if (hWndApp && IsDialogMessageW(hWndApp, &msg))
+			{
+				continue;
+			}
+
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
+
+		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
+	}
+
+	// Window is closeing, deregister the class.
+	if (!UnregisterClassW(wc.lpszClassName, wc.hInstance))
+	{
+		return 0;
+	}
+	C--;
+	return static_cast<int>(msg.wParam);
+};
+void GUIApp::UpdateForce(void)
+{
+	/*
+	Check if UserBody,
+	Set TempBody
+	Case buffer size
+	Ask TempBody For data (lock)
+	Receive Data from Tempbody (unlock/return)
+	Put data point into buffer
+	Display DataBufer()
+
+	*/
+
+	if (!m_WireLess)
+	{
+		return;
+	}
+
+	Wireless* TempBody;
+	TempBody = (Wireless*)m_WireLess;
+	if (TempBody->getNewDataFlagForce())
+	{
+		if (dataBufferForce[0].size() < cDataBufferSize)
+		{
+			double tempDataL;
+			double tempDataR;
+			double temptime;
+			do {
+				tempDataR = TempBody->getData(ForceR_itr);
+				tempDataL = TempBody->getData(ForceL_itr);
+				temptime = TempBody->getData(ForceTime_itr);
+			} while (tempDataL == 0 || temptime == -INFINITY);
+			
+			if (dataBufferForce[1].size() == 0)
+			{
+				m_nStartTime = temptime;
+			}
+			
+			dataBufferForce[0].push_back(tempDataL);
+			dataBufferForce[1].push_back(tempDataR);
+			dataBufferForce[2].push_back(temptime - m_nStartTime);
+		}
+		else
+		{
+			double tempDataR;
+			double tempDataL;
+			double temptime;
+			do {
+				tempDataR = TempBody->getData(ForceR_itr);
+				tempDataL = TempBody->getData(ForceL_itr);
+				temptime = TempBody->getData(ForceTime_itr);
+			} while (tempDataL == 0 || temptime == -INFINITY);
+
+			dataBufferForce[0].push_back(tempDataL);
+			dataBufferForce[1].push_back(tempDataR);
+			dataBufferForce[2].push_back(temptime - m_nStartTime);
+			
+			dataBufferForce[2].pop_front();
+			dataBufferForce[1].pop_front();
+			dataBufferForce[0].pop_front();
+		}
+		TempBody->setNewDataFlagForce(FALSE);
+	}
+	else {
+		Sleep(13); // Wait for a frame
+	}
+	DisplayForce();
+	return;
+}
+void GUIApp::DisplayForce(void)
+{
+	if (m_hWnd)
+	{
+		HRESULT hr = EnsureDirect2DResourcesForce();
+
+		if (SUCCEEDED(hr) && m_pRenderTarget)
+		{
+			m_pRenderTarget->BeginDraw();
+			m_pRenderTarget->Clear();
+
+			RECT rct;
+			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_FORCE), &rct);
+			int width = rct.right-80;
+			int height = rct.bottom-75;
+			if (dataBuffer[0].size() != 0) {
+				//for (int i = 0; i < dataBuffer[0].size() - 1; i++)
+			//	{
+
+					D2D1_POINT_2F Point0;
+					Point0.x = (width / 2)+(dataBufferForce[0].back() - dataBufferForce[1].back());
+					Point0.y = (height / 2);
+					D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, 45.0F, 45.0F);
+					m_pRenderTarget->FillEllipse(ellipse, m_pBrushGraphLine);
+					
+					D2D1_POINT_2F Point1;
+					Point0.x = width/2;
+					Point0.y = 0;
+					Point1.x = width/2;
+					Point1.y = height;
+					m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine3, c_GraphLineThickness);
+
+					/*D2D1_POINT_2F PointTemp;
+					PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
+					PointTemp.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
+					D2D1_POINT_2F PointTemp2;
+					PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i + 1]);
+					PointTemp2.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]);
+					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);*/
+				//}
+			}
+			D2D1_POINT_2F Point0;
+			D2D1_POINT_2F Point1;
+			Point0.x = width / 2;
+			Point0.y = 0;
+			Point1.x = width / 2;
+			Point1.y = height;
+			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine3, c_GraphLineThickness);
+		
+		/*	D2D1_POINT_2F Point0;
+			D2D1_POINT_2F Point1;
+			Point0.x = 0;
+			Point0.y = height - 80;
+			Point1.x = width;
+			Point1.y = height - 80;
+			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);*/
+		//	Point0.x = 0;
+		//	Point0.y = Point0.y / 2;
+		//	Point1.x = width;
+		//	Point1.y = Point1.y / 2;
+		//	m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine4, c_GraphLineThickness);
+		}
+		else {
+			Sleep(1);
+		}
+
+		hr = m_pRenderTarget->EndDraw();
+	}
+
+
+}
+HRESULT GUIApp::EnsureDirect2DResourcesForce()
+{
+	HRESULT hr = S_OK;
+
+	if (m_pD2DFactory && !m_pRenderTarget)
+	{
+		RECT rc;
+		GetWindowRect(GetDlgItem(m_hWnd, IDC_GRAPH_FORCE), &rc);
+
+		int width = rc.right - rc.left;
+		int height = rc.bottom - rc.top;
+		D2D1_SIZE_U size = D2D1::SizeU(width, height);
+		D2D1_RENDER_TARGET_PROPERTIES rtProps = D2D1::RenderTargetProperties();
+		rtProps.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE);
+		rtProps.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
+
+		// Create a Hwnd render target, in order to render to the window set in initialize
+		hr = m_pD2DFactory->CreateHwndRenderTarget(
+			rtProps,
+			D2D1::HwndRenderTargetProperties(GetDlgItem(m_hWnd, IDC_GRAPH_FORCE), size),
+			&m_pRenderTarget
+			);
+
+		if (FAILED(hr))
+		{
+			SetStatusMessage(L"Couldn't create Direct2D render target!", 10000, true);
+			return hr;
+		}
+
+		// light green
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.27f, 0.75f, 0.27f), &m_pBrushJointTracked);
+
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 1.0f), &m_pBrushJointInferred);
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 1.0f), &m_pBrushBoneTracked);
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 1.0f), &m_pBrushBoneInferred);
+
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red, 0.5f), &m_pBrushHandClosed);
+		//	m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 0.5f), &m_pBrushHandOpen);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red, 0.5f), &m_pBrushGraphLine);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 0.5f), &m_pBrushGraphLine2);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Blue, 0.5f), &m_pBrushGraphLine3);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Purple, 0.5f), &m_pBrushGraphLine4);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 0.5f), &m_pBrushGraphLine5);
+
+	}
+
+	return hr;
+}
 // Initilize
 void GUIApp::setJointTypes(int J0, int J1)
 {
@@ -693,6 +1237,10 @@ void GUIApp::pushData(double data, double time)
 void GUIApp::setOptiBodyClass(void* UBC)
 {
 	m_UserBody = UBC;
+}
+void GUIApp::setWirelessClass(void * DUST)
+{
+	m_WireLess = DUST;
 }
 // Stuff
 LRESULT CALLBACK GUIApp::MessageRouter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -735,6 +1283,9 @@ LRESULT GUIApp::DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (m_UserBody) {
 
 			Kinect_hWnd = TempBody->getHWnd(); 
+		}
+		if (m_WireLess) {
+		//	Wireless_hWnd =  
 		}
 		// Init Direct2D
 		D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);

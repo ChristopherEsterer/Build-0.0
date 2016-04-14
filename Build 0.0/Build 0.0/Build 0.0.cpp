@@ -6,6 +6,7 @@
 #include "Build 0.0.h"
 #include "OptiBody.h"	// Alaysis Class
 #include "BodyBasics.h" // Kinect
+#include "Wireless.h" // Wireless
 #include <iostream> //beep
 
 #define MAX_LOADSTRING 100
@@ -13,12 +14,16 @@
 #define WRISTSACCELL_PNUM 1
 #define WRISTSVELO_PNUM 2
 #define OPTIFIT_PNUM 3
+#define WIRELESS_PNUM 4
+#define	EMG_PNUM 5
+#define FORCE_PNUM 6
 #define THREAD_MAX 9
 //Process number linked to: window, thread, and GuiApp itterator ** added
 
 // Global Variables:
 HINSTANCE hInst;                                // current instance
 HINSTANCE KinectInst;							// Kinect Instance
+HINSTANCE WirelessInst;
 int Show;										// Variable for the Show of windo (i.e. minimized, full screen, ect)
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
@@ -31,9 +36,11 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 CBodyBasics kinectApp; // App Variables and Arrays
+Wireless WirelessApp;
 GUIApp GuiApp[8];		// App Array
 GUIApp* GuiAppPtr[8];
 // Threading
+std::vector<std::thread> WirelessThread;
 std::vector<std::thread> KinectThread;
 std::vector<std::thread> GUIThread;
 static std::array<std::thread::id, THREAD_MAX> ToClose;
@@ -176,35 +183,55 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
             case IDM_EXIT:
+				WirelessThread.back().join(); WirelessThread.pop_back();
 				KinectThread.back().join(); KinectThread.pop_back();
 				GUIThread.back().join(); GUIThread.pop_back();
                 DestroyWindow(hWnd);
                 break;
 			case ID_KINECT_RUN:
 				KinectThread.push_back(std::thread(StartKinect,hWnd, message, wParam, lParam));
+				WirelessThread.push_back(std::thread(StartWireless, hWnd, message, wParam, lParam));
 				break;
 			case ID_HIPS_ANGLE:
-				
+				GuiApp[OPTIFIT_PNUM].setWirelessClass((void*)&WirelessApp);
 				GuiApp[HIPSANGLE_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
 			//	GuiApp[HIPSANGLE_PNUM].setJointTypes(JointType_SpineMid, JointType_SpineMid); // Refer to CBodyBasics::SaveBody for Joint pairs
 				GuiApp[HIPSANGLE_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineBase);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
 			case ID_WRISTS_ACCELLERATION:
+				GuiApp[OPTIFIT_PNUM].setWirelessClass((void*)&WirelessApp);
 				GuiApp[WRISTSACCELL_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
 			//	GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_WristRight, JointType_WristRight);
 				GuiApp[WRISTSACCELL_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
 			case ID_WRISTS_VELOCITY:
+				GuiApp[OPTIFIT_PNUM].setWirelessClass((void*)&WirelessApp);
 				GuiApp[WRISTSVELO_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
 			//	GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_WristRight, JointType_WristRight);
 				GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
 			case ID_OPTIFIT_RUN:
+				//WirelessThread[WIRELESS_PNUM].
+				GuiApp[OPTIFIT_PNUM].setWirelessClass((void*) &WirelessApp);
 				GuiApp[OPTIFIT_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
 				GuiApp[OPTIFIT_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
+				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
+				break;
+			case ID_FORCE_MOMENT:
+				//WirelessThread[WIRELESS_PNUM].
+				GuiApp[FORCE_PNUM].setWirelessClass((void*)&WirelessApp);
+				GuiApp[FORCE_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
+				GuiApp[FORCE_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
+				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
+				break;
+			case ID_EMG_VALUE:
+				//WirelessThread[WIRELESS_PNUM].
+				GuiApp[EMG_PNUM].setWirelessClass((void*)&WirelessApp);
+				GuiApp[EMG_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
+				GuiApp[EMG_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
             default:
@@ -298,10 +325,24 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		ToClose[WRISTSVELO_PNUM] = std::this_thread::get_id();
 	
 	case ID_OPTIFIT_RUN:
-		GuiApp[OPTIFIT_PNUM].Datatype = 201;
+		GuiApp[OPTIFIT_PNUM].Datatype = 000;
 		GuiApp[OPTIFIT_PNUM].RunSpine(hInst, Show, hDlg, wmId);
 		ToClose[OPTIFIT_PNUM] = std::this_thread::get_id();
 		break;
+
+	case ID_FORCE_MOMENT:
+		GuiApp[FORCE_PNUM].Datatype = 000;
+		GuiApp[FORCE_PNUM].RunForce(hInst, Show, hDlg, wmId);
+		ToClose[FORCE_PNUM] = std::this_thread::get_id();
+		break;
+
+	case ID_EMG_VALUE:
+		GuiApp[EMG_PNUM].Datatype = 0000;
+		GuiApp[EMG_PNUM].RunEMG(hInst, Show, hDlg, wmId);
+		ToClose[EMG_PNUM] = std::this_thread::get_id();
+		break;
+
+
 }
 		
 
@@ -310,7 +351,17 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	// this is where you save the ID to tell Build to remove the thread
 	//ToClose[] = std::this_thread::get_id());
 	
-};
+}
+void StartWireless(HWND H, UINT I, WPARAM W, LPARAM L)
+{
+	HINSTANCE NEWhInstance = (HINSTANCE)GetModuleHandle(NULL);
+	WirelessInst = NEWhInstance; // save incase we need it later
+							   //kinectApp.ParentWindow(hDlg);
+	WirelessApp.RunWireless();
+
+	ToClose[WIRELESS_PNUM] = std::this_thread::get_id();
+}
+;
 void CloseThread(int PNUM)
 {
 	// using std::find with vector and iterator:
@@ -335,6 +386,14 @@ void CloseThread(int PNUM)
 		case OPTIFIT_PNUM:
 			GUIThread[OPTIFIT_PNUM].join();
 			GUIThread.erase(GUIThread.begin() + OPTIFIT_PNUM);
+			break;
+		case FORCE_PNUM:
+			GUIThread[FORCE_PNUM].join();
+			GUIThread.erase(GUIThread.begin() + FORCE_PNUM);
+			break;
+		case EMG_PNUM:
+			GUIThread[EMG_PNUM].join();
+			GUIThread.erase(GUIThread.begin() + EMG_PNUM);
 			break;
 		}
 				//GUIThread[i].join();
