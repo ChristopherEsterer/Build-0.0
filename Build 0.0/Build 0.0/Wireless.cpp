@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "Wireless.h"
 
+void executeBatch(void) {
+	system("RunWireless.bat");
+}
 
 Wireless::Wireless()
 {
@@ -15,9 +18,9 @@ Wireless::~Wireless()
 // gets a line from  the file and saves to dataBuffer
 void Wireless::GetLineEMG()
 {
-//	do {
+	do {
 		DatafileEmg.open("EMG_Datafile.txt", std::ifstream::in);
-	//} while (!DatafileEmg.is_open());
+	} while (!DatafileEmg.is_open());
 	
 	if(DatafileEmg.is_open()){
 		std::string line;
@@ -39,12 +42,14 @@ void Wireless::GetLineEMG()
 			
 				CompressNoise(temg);
 
-
-				EMGDataMutex.lock();
-				dataBufferEMG[0].push_back(ttime);
-				dataBufferEMG[1].push_back(temg);
-				EMGDataMutex.unlock();
-				setNewDataFlagEMG(TRUE);
+				if (FirstTime) { StartTime = ttime; FirstTime = false; }
+				if (ttime >= StartTime) {
+					EMGDataMutex.lock();
+					dataBufferEMG[0].push_back(ttime);
+					dataBufferEMG[1].push_back(temg);
+					EMGDataMutex.unlock();
+					setNewDataFlagEMG(TRUE);
+				}
 			}
 	
 	DatafileEmg.close();
@@ -125,15 +130,19 @@ void Wireless::GetLineForce()
 			pos = line2.find(delimiter);
 			tfR = std::stod(line2.substr(0, pos));
 			line2.erase(0, pos + delimiter.length()); */
-
-			ForceDataMutex.lock();
-			dataBufferForce[0].push_back(ttime);
-			dataBufferForce[1].push_back(tfL);
-			dataBufferForce[2].push_back(tfR);
-			ForceDataMutex.unlock();
+			if (FirstTime) { StartTime = ttime; FirstTime = false;
+			}
+			if (ttime >= StartTime) {
+				ForceDataMutex.lock();
+				dataBufferForce[0].push_back(ttime);
+				dataBufferForce[1].push_back(tfL);
+				dataBufferForce[2].push_back(tfR);
+				setNewDataFlagForce(TRUE);
+				ForceDataMutex.unlock();
+			}
 		}
 		DatafileForce.close();
-		setNewDataFlagForce(TRUE);
+		
 	}
 //	DatafileForce.close();
 	return;
@@ -189,6 +198,8 @@ double Wireless::getData(int c)
 
 void Wireless::RunWireless(void) // Runs on a thread Populating dataBuffer;
 {
+	executeBatch();
+	Sleep(2000);
 	DatafileForce.open("Force_Datafile.txt", std::ifstream::in);
 	DatafileEmg.open("EMG_Datafile.txt", std::ifstream::in);
 	while (true) {
@@ -198,7 +209,7 @@ void Wireless::RunWireless(void) // Runs on a thread Populating dataBuffer;
 			remove("EMG_Datafile.txt");
 		}
 		if (DatafileForce.eof()) {
-			remove("Force_Datafile.txt");
+	//		remove("Force_Datafile.txt");
 		}
 	}
 }
@@ -230,8 +241,9 @@ BOOL Wireless::getNewDataFlagForce(void)
 	BOOL b;
 	DataFlagForceMutex.lock();
 	b = NewDataForceFlag;
-	if (!dataBufferForce[0].empty() && !dataBufferForce[1].empty()) { b = TRUE; }
+	//if (!dataBufferForce[0].empty() && !dataBufferForce[1].empty()) { b = TRUE; }
 	DataFlagForceMutex.unlock();
 	return b;
 }
+
 ;

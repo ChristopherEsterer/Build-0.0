@@ -213,12 +213,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				GuiApp[WRISTSVELO_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
 				break;
-			case ID_OPTIFIT_RUN:
+			case ID_OPTIFIT_RUN: // Runs everything we need
+				KinectThread.push_back(std::thread(StartKinect, hWnd, message, wParam, lParam));
+				WirelessThread.push_back(std::thread(StartWireless, hWnd, message, wParam, lParam));
 				//WirelessThread[WIRELESS_PNUM].
 				GuiApp[OPTIFIT_PNUM].setWirelessClass((void*) &WirelessApp);
 				GuiApp[OPTIFIT_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
 				GuiApp[OPTIFIT_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
 				GUIThread.push_back(std::thread(StartGUI, hWnd, message, wParam, lParam));
+
+				GuiApp[FORCE_PNUM].setWirelessClass((void*)&WirelessApp);
+				GuiApp[FORCE_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
+				GuiApp[FORCE_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
+				GUIThread.push_back(std::thread(StartGUI, hWnd, message, ID_FORCE_MOMENT, lParam));
+
+				GuiApp[EMG_PNUM].setWirelessClass((void*)&WirelessApp);
+				GuiApp[EMG_PNUM].setOptiBodyClass(kinectApp.GetUserBody());
+				GuiApp[EMG_PNUM].setJointTypes(JointType_SpineShoulder, JointType_SpineShoulder);
+				GUIThread.push_back(std::thread(StartGUI, hWnd, message, ID_EMG_VALUE, lParam));
 				break;
 			case ID_FORCE_MOMENT:
 				//WirelessThread[WIRELESS_PNUM].

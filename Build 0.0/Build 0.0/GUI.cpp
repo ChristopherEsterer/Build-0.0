@@ -48,7 +48,7 @@ float MaptoYEMG(std::deque<double> dataBuf, float MAX, float MIN, double data)
 	//if (DataRange == 0) { return 0; }
 	double DataNorm = data - DataMin;
 	//double T = (((PixleRange / DataRange) * data));
-	double T = ((PixleRange / 1000) * data);
+	double T = ((PixleRange / 500) * data);
 	return (float)T;
 }
 GUIApp::GUIApp() :
@@ -739,7 +739,7 @@ DWORD GUIApp::RunEMG(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 	while (WM_QUIT != msg.message)
 	{
 		UpdateEMG();
-
+		
 		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			// If a dialog message will be taken care of by the dialog proc
@@ -851,10 +851,10 @@ void GUIApp::DisplayEMG(void)
 				{
 					D2D1_POINT_2F PointTemp;
 					PointTemp.x = Mapto(dataBufferEMG[1], width, 0, dataBufferEMG[1][i]);
-					PointTemp.y = ((height - 81)/2) - MaptoYEMG(dataBufferEMG[0], (height - 81), 0, dataBufferEMG[0][i]-244);
+					PointTemp.y = ((height - 81)/2) - MaptoYEMG(dataBufferEMG[0], (height - 81), 0, dataBufferEMG[0][i]-227);
 					D2D1_POINT_2F PointTemp2;
 					PointTemp2.x = Mapto(dataBufferEMG[1], width, 0, dataBufferEMG[1][i + 1]);
-					PointTemp2.y = ((height - 81)/2) - MaptoYEMG(dataBufferEMG[0], (height - 81), 0, dataBufferEMG[0][i + 1]-244);
+					PointTemp2.y = ((height - 81)/2) - MaptoYEMG(dataBufferEMG[0], (height - 81), 0, dataBufferEMG[0][i + 1]-227);
 					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
 				}
 			}
@@ -992,7 +992,7 @@ DWORD GUIApp::RunForce(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 	while (WM_QUIT != msg.message)
 	{
 		UpdateForce();
-
+		
 		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			// If a dialog message will be taken care of by the dialog proc
@@ -1087,7 +1087,7 @@ void GUIApp::UpdateForce(void)
 	else {
 		Sleep(13); // Wait for a frame
 	}
-	DisplayForce();
+	//DisplayForce();
 	return;
 }
 void GUIApp::DisplayForce(void)
@@ -1105,15 +1105,28 @@ void GUIApp::DisplayForce(void)
 			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_FORCE), &rct);
 			int width = rct.right-80;
 			int height = rct.bottom-75;
-			if (dataBuffer[0].size() != 0) {
+			if (dataBufferForce[0].size() != 0) {
 				//for (int i = 0; i < dataBuffer[0].size() - 1; i++)
 			//	{
 
 					D2D1_POINT_2F Point0;
-					Point0.x = (width / 2)+(dataBufferForce[0].back() - dataBufferForce[1].back());
+					double ForceDiff = (dataBufferForce[0].back() - dataBufferForce[1].back());
+					Point0.x = (width / 2) +ForceDiff;
 					Point0.y = (height / 2);
 					D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, 45.0F, 45.0F);
-					m_pRenderTarget->FillEllipse(ellipse, m_pBrushGraphLine);
+					
+					ID2D1SolidColorBrush* EllipseBrush;
+					if (abs(ForceDiff) > 20) {
+						EllipseBrush = m_pBrushGraphLine;
+					}
+					else if (abs(ForceDiff) < 20) {
+						EllipseBrush = m_pBrushGraphLine5;
+					}
+					 if (abs(ForceDiff) < 10) {
+						EllipseBrush = m_pBrushGraphLine2;
+					}
+					
+						m_pRenderTarget->FillEllipse(ellipse, EllipseBrush);
 					
 					D2D1_POINT_2F Point1;
 					Point0.x = width/2;

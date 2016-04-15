@@ -10,9 +10,12 @@ private:
 	void GetLineForce();
 	void CompressNoise(double& emgData);
 
-	double EMGNoiseMax = 244;
-	double EMGNoiseMiddle = 244;
-	double EMGNoiseMin = 244;
+	double EMGNoiseMax = 250;
+	double EMGNoiseMiddle = 227;
+	double EMGNoiseMin = 200;
+
+	double StartTime;
+	bool FirstTime = true;
 
 	std::array<std::deque<double>,2> dataBufferEMG; // [0] Time [1]EMG 
 	std::array<std::deque<double>, 3> dataBufferForce; // [0] Time [1]ForceL [2]ForceR

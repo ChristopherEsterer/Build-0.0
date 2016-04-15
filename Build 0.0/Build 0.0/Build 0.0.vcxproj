@@ -183,9 +183,11 @@
     <Image Include="app.ico" />
     <Image Include="bitmap1.bmp" />
     <Image Include="Build 0.0.ico" />
+    <Image Include="icon1.ico" />
     <Image Include="Logo.png" />
     <Image Include="LogoCopy.bmp" />
     <Image Include="LogoSmall.bmp" />
+    <Image Include="OarmoIcon.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
