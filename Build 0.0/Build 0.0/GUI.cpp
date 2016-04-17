@@ -38,17 +38,17 @@ float MaptoY(std::deque<double> dataBuf, float MAX, float MIN, double data)
 	double T = ((PixleRange / DataRange) * DataNorm);
 	return (float)T;
 }
-float MaptoYEMG(std::deque<double> dataBuf, float MAX, float MIN, double data)
+float MaptoYEMG(std::deque<double>*dataBuf, int* MAX, int* MIN, double* data)
 {
-	double DataMax = *std::max_element(dataBuf.begin(), dataBuf.end());
-	double DataMin = *std::min_element(dataBuf.begin(), dataBuf.end());
+	double DataMax = *std::max_element(dataBuf->begin(), dataBuf->end());
+	double DataMin = *std::min_element(dataBuf->begin(), dataBuf->end());
 	double DataRange = (DataMax - DataMin);
 	//double ScaleFactor;
-	double PixleRange = (MAX - MIN);
+	double PixleRange = (*MAX - *MIN);
 	//if (DataRange == 0) { return 0; }
-	double DataNorm = data - DataMin;
+	double DataNorm = *data - DataMin;
 	//double T = (((PixleRange / DataRange) * data));
-	double T = ((PixleRange / 500) * data);
+	double T = ((PixleRange / 1000) * *data);
 	return (float)T;
 }
 GUIApp::GUIApp() :
@@ -68,7 +68,6 @@ m_nNextStatusTime(0LL)
 	glMatrixMode(GL_PROJECTION);
 	gluOrtho2D(0.0, 200.0, 0.0, 150.0);
 }
-
 GUIApp::~GUIApp()
 {
 }
@@ -189,17 +188,20 @@ Display DataBufer()
 	{
 		if (dataBuffer[0].size() < cDataBufferSize)
 		{
-			if (dataBuffer[1].size() == 0)
-			{
-				m_nStartTime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
-			}
+			//if (dataBuffer[1].size() == 0)
+			//{
+				//m_nStartTime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
+			//}
 			double tempData;
 			double temptime;
 			do {
 				tempData = TempBody->getData(JointType0, JointType1, Datatype);
 				temptime = TempBody->getData(JointType0, JointType1, (Datatype - (Datatype % 10) + 4));
 			} while (tempData == 0 || temptime == -INFINITY);
-
+			if (dataBuffer[1].size() == 0)
+			{
+				m_nStartTime = temptime;
+			}
 			dataBuffer[0].push_back(tempData);
 			dataBuffer[1].push_back(temptime - m_nStartTime);
 		}
@@ -421,6 +423,10 @@ void GUIApp::UpdateSpine(void)
 	{
 		return;
 	}
+	if (!EMGGUICLASS)
+	{
+		return;
+	}
 	// To analyze the spine we need to look at multiple variables at once.
 	// Multiple DataBuffers: HipsJointAngle,HipJointAngleV,KneeJointAngle, KneeJointAngleV, HipsYVelocity, WristYAcceleration.
 	// Array of getData Codes for each Var
@@ -428,14 +434,14 @@ void GUIApp::UpdateSpine(void)
 	// Analyse
 	// Save to file
 	//
+
+	GUIApp* TempEmg;
+	TempEmg = (GUIApp*)EMGGUICLASS;
 	OptiBody* TempBody;
 	TempBody = (OptiBody*)m_UserBody;
 	if (TempBody->getNewDataFlag())
 	{
-		if (dataBufferSpine[0][1].size() == 0)
-		{
-			m_nStartTime = TempBody->getData(0, 0, 104);
-		}
+
 		for (int i = 0; i < dataBufferSpine.size(); i++)
 		{
 			if (dataBufferSpine[i][0].size() < cDataBufferSize)
@@ -450,7 +456,10 @@ void GUIApp::UpdateSpine(void)
 					tempData = TempBody->getData(tj0, tj1, tDt);
 					temptime = TempBody->getData(tj0, tj1, (tDt - (tDt % 10) + 4));
 				} while (tempData == 0 || temptime == -INFINITY);
-
+				if (dataBufferSpine[0][1].size() == 0)
+				{
+					m_nStartTime = temptime;
+				}
 				dataBufferSpine[i][0].push_back(tempData);
 				dataBufferSpine[i][1].push_back(temptime - m_nStartTime);
 			}
@@ -471,6 +480,8 @@ void GUIApp::UpdateSpine(void)
 				dataBufferSpine[i][1].push_back(temptime - m_nStartTime);
 				dataBufferSpine[i][1].pop_front();
 				dataBufferSpine[i][0].pop_front();
+				WristAccelAverage();
+				WristVeloAverage();
 			}
 		}
 		SaveSpineBuffer();
@@ -499,15 +510,28 @@ void GUIApp::DisplaySpine(void)
 			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_SPINE), &rct);
 			int width = rct.right - 90;
 			int height = rct.bottom - 80;
+
 			if (!dataBufferSpine[0][0].empty())
 			{
 			//	FormPoints = HipsYVHipAngV();
 			//	FormPoints = KneeAngVHipAngV();
 			//	FormPoints = KneeAngHipAng();
-				CheckLiftPos();
-				FormPoints = FormPoints+KneeAngV();
 
-				if (FormPoints >=4) {
+				GUIApp* TempEmg;
+				TempEmg = (GUIApp*)EMGGUICLASS;
+				if (243 < abs(TempEmg->getEmgAvg()) && 250 > abs(TempEmg->getEmgAvg()) && 1.0E-8 > abs(WristVeloAvg)) {
+					D2D1_POINT_2F Point0;
+					Point0.x = (width / 2);
+					Point0.y = (height / 2);
+					D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, 45.0F, 45.0F);
+					m_pRenderTarget->FillEllipse(ellipse, m_pBrushGraphLine2);
+				}
+
+				//CheckLiftPos();
+				FormPoints = FormPoints+KneeAngV();
+			/*	if (liftState) { Brush = m_pBrushGraphLine; }
+				else { Brush = m_pBrushGraphLine5; }
+
 					D2D1_POINT_2F Point0;
 					Point0.x = (width / 2);
 					Point0.y = (height / 2);
@@ -523,7 +547,7 @@ void GUIApp::DisplaySpine(void)
 					//Point1.x = (width / 2) + (cSpinelineLenght);
 					//Point1.y = (height / 2) - (cSpinelineLenght / 2);
 					//m_pRenderTarget->DrawLine(Point0, Point1, Brush, c_SpineLineThickness);
-				}
+				*/
 				//FormPoints = 0;
 			}
 		hr = m_pRenderTarget->EndDraw();
@@ -588,7 +612,7 @@ std::tuple<int,int,int> GUIApp::SpineGetMap(int i)
 	case SpineData_KneeAngleVelo:
 		return std::make_tuple(JointType_KneeRight, JointType_KneeRight,210);
 	case SpineData_HipsYVelo:
-		return std::make_tuple(JointType_SpineBase, JointType_SpineBase,111);
+		return std::make_tuple(JointType_WristRight, JointType_WristRight,111); // WristYVelo
 	case SpineData_WristYAccel:
 		return std::make_tuple(JointType_WristRight, JointType_WristRight,121);
 	case SpineData_WristYPos:
@@ -619,20 +643,19 @@ void GUIApp::SaveSpineBuffer(void)
 }
 void GUIApp::CheckLiftPos(void)
 {
-	if (dataBufferSpine[SpineData_WristYPos][0].back() < WristMin) 
+	if (dataBufferSpine[SpineData_WristYPos][0].back()  < WristMin && abs(WristVeloAvg) < 5.0E-9)
 	{
 		WristMin = dataBufferSpine[SpineData_WristYPos][0].back();
 	}	
-	if (dataBufferSpine[SpineData_WristYPos][0].back() > WristMax) {
+	if (dataBufferSpine[SpineData_WristYPos][0].back() > WristMax && abs(WristVeloAvg) < 5.0E-9) {
 		WristMax = dataBufferSpine[SpineData_WristYPos][0].back();
 	}
 
 
-	if (abs(dataBufferSpine[SpineData_WristYPos][0].back() - WristMax) < (0.01)) {
-		liftState = 1;
+	if (dataBufferSpine[SpineData_WristYPos][0].back() > (WristMax*.75) &&  WristVeloAvg > 0 && abs(WristVeloAvg) < 5.0E-9) { // within 80% of top 
+		liftState = 1; // top
 	}
-	
-	if (abs(dataBufferSpine[SpineData_WristYPos][0].back() - WristMin) < (0.01)) {
+	else if (dataBufferSpine[SpineData_WristYPos][0].back() < (WristMin*1.25) && WristVeloAvg < 0 && abs(WristVeloAvg) < 5.0E-9) {
 	
 		if (liftState = 1)
 		{
@@ -642,7 +665,14 @@ void GUIApp::CheckLiftPos(void)
 			liftState = 0;
 		};
 	}
+	/*if (WristVeloAvg > 0) {
+		liftState = 0;
+	}
+	else {
+		liftState = 1;
+	}*/
 }
+
 int GUIApp::HipsYVHipAngV(void)
 {
 	if (dataBufferSpine[SpineData_HipsYVelo][0].back() > dataBufferSpine[SpineData_HipAngleVelo][0].back()) {
@@ -735,6 +765,8 @@ DWORD GUIApp::RunEMG(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 	// Show window
 	ShowWindow(hWndApp, nCmdShow);
 
+//	emgHighCount = 0;
+//	emgLowCount = 0;
 	// Main message loop
 	while (WM_QUIT != msg.message)
 	{
@@ -795,10 +827,10 @@ void GUIApp::UpdateEMG(void)
 
 			double tempData;
 			double temptime;
-			do {
+		//	do {
 				tempData = TempBody->getData(EMG_itr);
 				temptime = TempBody->getData(EMGTime_itr);
-			} while (tempData == 0 || temptime == -INFINITY);
+		//	} while (tempData == 0 || temptime == -INFINITY);
 			
 			if (dataBufferEMG[1].size() == 0)
 			{
@@ -813,20 +845,22 @@ void GUIApp::UpdateEMG(void)
 		{
 			double tempData;
 			double temptime;
-			do {
+		//	do {
 				tempData = TempBody->getData(EMG_itr);
 				temptime = TempBody->getData(EMGTime_itr);
-			} while (tempData == 0 || temptime == -INFINITY);
+		//	} while (tempData == 0 || temptime == -INFINITY);
 
 			dataBufferEMG[0].push_back(tempData);
 			dataBufferEMG[1].push_back(temptime - m_nStartTime);
 			dataBufferEMG[1].pop_front();
 			dataBufferEMG[0].pop_front();
+			CheckEMGAverage();
 		}
+		SaveEMGBuffer();
 		TempBody->setNewDataFlagEMG(FALSE);
 	}
 	else {
-		Sleep(13); // Wait for a frame
+		Sleep(10); // Wait for a frame
 	}
 	DisplayEMG();
 	return;
@@ -845,25 +879,26 @@ void GUIApp::DisplayEMG(void)
 			RECT rct;
 			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_EMG), &rct);
 			int width = rct.right;
-			int height = rct.bottom;
+			int height = rct.bottom -81;
+			int Zero = 0;
 			if (dataBufferEMG[0].size() != 0) {
 				for (int i = 0; i < dataBufferEMG[0].size() - 1; i++)
 				{
 					D2D1_POINT_2F PointTemp;
 					PointTemp.x = Mapto(dataBufferEMG[1], width, 0, dataBufferEMG[1][i]);
-					PointTemp.y = ((height - 81)/2) - MaptoYEMG(dataBufferEMG[0], (height - 81), 0, dataBufferEMG[0][i]-227);
+					PointTemp.y = ((height)/2) - MaptoYEMG(&dataBufferEMG[0], &height, &Zero, &dataBufferEMG[0][i]);
 					D2D1_POINT_2F PointTemp2;
 					PointTemp2.x = Mapto(dataBufferEMG[1], width, 0, dataBufferEMG[1][i + 1]);
-					PointTemp2.y = ((height - 81)/2) - MaptoYEMG(dataBufferEMG[0], (height - 81), 0, dataBufferEMG[0][i + 1]-227);
+					PointTemp2.y = ((height)/2) - MaptoYEMG(&dataBufferEMG[0], &height, &Zero, &dataBufferEMG[0][i + 1]);
 					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
 				}
 			}
 			D2D1_POINT_2F Point0;
 			D2D1_POINT_2F Point1;
 			Point0.x = 0;
-			Point0.y = height - 80;
+			Point0.y = height;
 			Point1.x = width;
-			Point1.y = height - 80;
+			Point1.y = height;
 			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);
 			Point0.x = 0;
 			Point0.y = Point0.y / 2;
@@ -927,6 +962,74 @@ HRESULT GUIApp::EnsureDirect2DResourcesEMG()
 	}
 
 	return hr;
+}
+void GUIApp::SaveEMGBuffer(void)
+{
+
+	Logfile.open("logEMG.csv", std::ios_base::app);
+	if (Logfile.is_open())
+	{
+		double t0, tt;
+		tt = dataBufferEMG[1].back();
+		t0 = dataBufferEMG[0].back();
+
+		Logfile << tt << "," << t0 << ",\n";
+		Logfile.close();
+		f_dataEMGSaved = true;
+	}
+}
+void GUIApp::CheckEMGAverage(void)
+{
+	double tAvg = 0;
+	int c = 0;
+	for (std::deque<double>::iterator it = ((dataBufferEMG[0].end()) - 50); it != dataBufferEMG[0].end(); ++it) {
+	//	if (*it != EMGLow) {
+			tAvg += *it;
+			c++;
+	//	}
+	}
+	tAvg = tAvg / c;
+	if (tAvg > EMGMaxAvg) {
+		EMGMaxAvg = tAvg;
+	}
+	if (tAvg > EMGMaxAvg*zone) {
+		MutexEmgCount.lock();
+		emgHighCount=1;
+		MutexEmgCount.unlock();
+	}
+	else if (tAvg < EMGMaxAvg*zone) {
+		MutexEmgCount.lock();
+		emgHighCount=0;
+		MutexEmgCount.unlock();
+	}
+	MutexEmgCount.lock();
+	emgAvg = tAvg;
+	MutexEmgCount.unlock();
+
+	return;
+}
+double GUIApp::WristAccelAverage(void)
+{
+	double tAvg = 0;
+	int c = 0;
+	for (std::deque<double>::iterator it = ((dataBufferSpine[5][0].end()) - 20); it != dataBufferSpine[5][0].end(); ++it) {
+		tAvg += *it;
+		c++;
+	}
+	tAvg = tAvg / c;
+	return tAvg;
+}
+double GUIApp::WristVeloAverage(void)
+{
+	double tAvg = 0;
+	int c = 0;
+	for (std::deque<double>::iterator it = ((dataBufferSpine[4][0].end()) - 10); it != dataBufferSpine[4][0].end(); ++it) {
+		tAvg += *it;
+		c++;
+	}
+	tAvg = tAvg / c;
+	WristVeloAvg = tAvg;
+	return tAvg;
 }
 // Run Force
 DWORD GUIApp::RunForce(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
@@ -1021,6 +1124,18 @@ DWORD GUIApp::RunForce(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 	C--;
 	return static_cast<int>(msg.wParam);
 };
+void GUIApp::CheckEMGHigh(double data)
+{
+	if (data > EMGHigh) {
+		emgHighCount++;
+	}
+}
+void GUIApp::CheckEMGLow(double data)
+{
+	if (EMGLow > data) {
+		emgLowCount++;
+	}
+}
 void GUIApp::UpdateForce(void)
 {
 	/*
@@ -1048,11 +1163,11 @@ void GUIApp::UpdateForce(void)
 			double tempDataL;
 			double tempDataR;
 			double temptime;
-			do {
+	//		do {
 				tempDataR = TempBody->getData(ForceR_itr);
 				tempDataL = TempBody->getData(ForceL_itr);
 				temptime = TempBody->getData(ForceTime_itr);
-			} while (tempDataL == 0 || temptime == -INFINITY);
+	//		} while (tempDataL == 0 || temptime == -INFINITY);
 			
 			if (dataBufferForce[1].size() == 0)
 			{
@@ -1068,11 +1183,11 @@ void GUIApp::UpdateForce(void)
 			double tempDataR;
 			double tempDataL;
 			double temptime;
-			do {
+		//	do {
 				tempDataR = TempBody->getData(ForceR_itr);
 				tempDataL = TempBody->getData(ForceL_itr);
 				temptime = TempBody->getData(ForceTime_itr);
-			} while (tempDataL == 0 || temptime == -INFINITY);
+		//	} while (tempDataL == 0 || temptime == -INFINITY);
 
 			dataBufferForce[0].push_back(tempDataL);
 			dataBufferForce[1].push_back(tempDataR);
@@ -1085,7 +1200,7 @@ void GUIApp::UpdateForce(void)
 		TempBody->setNewDataFlagForce(FALSE);
 	}
 	else {
-		Sleep(13); // Wait for a frame
+		Sleep(20); // Wait for a frame
 	}
 	//DisplayForce();
 	return;
@@ -1251,9 +1366,29 @@ void GUIApp::setOptiBodyClass(void* UBC)
 {
 	m_UserBody = UBC;
 }
+void GUIApp::setEMGGUIClass(void* UBC)
+{
+	EMGGUICLASS = UBC;
+}
 void GUIApp::setWirelessClass(void * DUST)
 {
 	m_WireLess = DUST;
+}
+int GUIApp::getEmgHighCount(void)
+{
+	int i;
+	MutexEmgCount.lock();
+	i = emgHighCount;
+	MutexEmgCount.unlock();
+	return i;
+}
+float GUIApp::getEmgAvg(void)
+{
+	float i;
+	MutexEmgCount.lock();
+	i = emgAvg;
+	MutexEmgCount.unlock();
+	return i;
 }
 // Stuff
 LRESULT CALLBACK GUIApp::MessageRouter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

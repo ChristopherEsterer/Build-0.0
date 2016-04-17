@@ -10,9 +10,9 @@ private:
 	void GetLineForce();
 	void CompressNoise(double& emgData);
 
-	double EMGNoiseMax = 250;
+	double EMGNoiseMax = 227;
 	double EMGNoiseMiddle = 227;
-	double EMGNoiseMin = 200;
+	double EMGNoiseMin = 227;
 
 	double StartTime;
 	bool FirstTime = true;

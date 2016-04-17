@@ -1,3 +1,21 @@
-﻿  Wireless.cpp
+﻿  stdafx.cpp
+  Wireless.cpp
+  OptiBodyStructs.cpp
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\optibodystructs.cpp(84): warning C4094: untagged 'struct' declared no symbols
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\optibodystructs.cpp(94): warning C4094: untagged 'struct' declared no symbols
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\optibodystructs.cpp(124): warning C4094: untagged 'struct' declared no symbols
+  OptiBody.cpp
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\optibody.cpp(44): warning C4018: '<': signed/unsigned mismatch
+  GUI.cpp
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\gui.cpp(246): warning C4018: '<': signed/unsigned mismatch
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\gui.cpp(438): warning C4018: '<': signed/unsigned mismatch
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\gui.cpp(857): warning C4018: '<': signed/unsigned mismatch
+  Build 0.0.cpp
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\build 0.0.cpp(75): warning C4101: 'lpMsg': unreferenced local variable
+  BodyBasics.cpp
+  AppManager.cpp
+  Generating Code...
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\gui.cpp(601): warning C4715: 'GUIApp::SpineGetMap': not all control paths return a value
+c:\users\est_f_000\documents\omaro\programs\build 0.0\build-0.0\build 0.0\build 0.0\optibody.cpp(425): warning C4700: uninitialized local variable 'TempData' used
 AppManager.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:LBR' specification
   Build 0.0.vcxproj -> C:\Users\est_f_000\Documents\Omaro\Programs\Build 0.0\Build-0.0\Build 0.0\Debug\Build 0.0.exe

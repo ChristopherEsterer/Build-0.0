@@ -198,8 +198,9 @@ double Wireless::getData(int c)
 
 void Wireless::RunWireless(void) // Runs on a thread Populating dataBuffer;
 {
-	executeBatch();
 	Sleep(2000);
+	executeBatch();
+	Sleep(1000);
 	DatafileForce.open("Force_Datafile.txt", std::ifstream::in);
 	DatafileEmg.open("EMG_Datafile.txt", std::ifstream::in);
 	while (true) {
@@ -241,7 +242,8 @@ BOOL Wireless::getNewDataFlagForce(void)
 	BOOL b;
 	DataFlagForceMutex.lock();
 	b = NewDataForceFlag;
-	//if (!dataBufferForce[0].empty() && !dataBufferForce[1].empty()) { b = TRUE; }
+	if (!dataBufferForce[0].empty() && !dataBufferForce[1].empty()) { b = TRUE; }
+	else if (dataBufferForce[0].empty() || dataBufferForce[1].empty()) { b = FALSE; }
 	DataFlagForceMutex.unlock();
 	return b;
 }

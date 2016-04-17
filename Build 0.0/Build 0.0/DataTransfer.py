@@ -50,16 +50,16 @@ def handle_data(notifName, notifParams):
     # ============== Timing Definitions  ================
     d = datetime.datetime.now() 
     ms = datetime.datetime.now().microsecond 
-    delta = datetime.datetime.now() - datetime.timedelta(milliseconds=162) 
-    delta1 = datetime.datetime.now() - datetime.timedelta(milliseconds=144)
-    delta2 = datetime.datetime.now() - datetime.timedelta(milliseconds=126) 
-    delta3 = datetime.datetime.now() - datetime.timedelta(milliseconds=108)
-    delta4 = datetime.datetime.now() - datetime.timedelta(milliseconds=90)
-    delta5 = datetime.datetime.now() - datetime.timedelta(milliseconds=72)
-    delta6 = datetime.datetime.now() - datetime.timedelta(milliseconds=54)
-    delta7 = datetime.datetime.now() - datetime.timedelta(milliseconds=36)
-    delta8 = datetime.datetime.now() - datetime.timedelta(milliseconds=18)
-    delta9 = datetime.datetime.now() - datetime.timedelta(milliseconds=0)
+    delta = datetime.datetime.now() - datetime.timedelta(milliseconds=90) 
+    delta1 = datetime.datetime.now() - datetime.timedelta(milliseconds=80)
+    delta2 = datetime.datetime.now() - datetime.timedelta(milliseconds=70) 
+    delta3 = datetime.datetime.now() - datetime.timedelta(milliseconds=60)
+    delta4 = datetime.datetime.now() - datetime.timedelta(milliseconds=50)
+    delta5 = datetime.datetime.now() - datetime.timedelta(milliseconds=40)
+    delta6 = datetime.datetime.now() - datetime.timedelta(milliseconds=30)
+    delta7 = datetime.datetime.now() - datetime.timedelta(milliseconds=20)
+    delta8 = datetime.datetime.now() - datetime.timedelta(milliseconds=10)
+    delta9 = datetime.datetime.now() - datetime.timedelta(milliseconds=00)
     
     timems = str(datetime.datetime.now().microsecond)
 

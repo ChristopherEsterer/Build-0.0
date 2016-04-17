@@ -1,22 +1,10 @@
-﻿  stdafx.cpp
-  AppManager.cpp
-  BodyBasics.cpp
-  Build 0.0.cpp
-Build 0.0.cpp(75): warning C4101: 'lpMsg': unreferenced local variable
-  GUI.cpp
-GUI.cpp(244): warning C4018: '<': signed/unsigned mismatch
-GUI.cpp(439): warning C4018: '<': signed/unsigned mismatch
-GUI.cpp(850): warning C4018: '<': signed/unsigned mismatch
-  OptiBody.cpp
-OptiBody.cpp(44): warning C4018: '<': signed/unsigned mismatch
-  OptiBodyStructs.cpp
-OptiBodyStructs.cpp(84): warning C4094: untagged 'struct' declared no symbols
-OptiBodyStructs.cpp(94): warning C4094: untagged 'struct' declared no symbols
-OptiBodyStructs.cpp(124): warning C4094: untagged 'struct' declared no symbols
-  Wireless.cpp
+﻿  GUI.cpp
+GUI.cpp(246): warning C4018: '<': signed/unsigned mismatch
+GUI.cpp(445): warning C4018: '<': signed/unsigned mismatch
+GUI.cpp(885): warning C4018: '<': signed/unsigned mismatch
   Generating code
-  16 of 764 functions ( 2.1%) were compiled, the rest were copied from previous compilation.
+  1 of 772 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    5 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Build 0.0.vcxproj -> C:\Users\est_f_000\Documents\Omaro\Programs\Build 0.0\Build-0.0\Build 0.0\Release\Build 0.0.exe

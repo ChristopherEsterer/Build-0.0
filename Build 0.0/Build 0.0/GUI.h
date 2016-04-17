@@ -21,7 +21,11 @@ public:
 	void						setJointTypes(int J0, int J1);
 	void						pushData(double data, double time);
 	void						setOptiBodyClass(void * UBC);
+	void						setEMGGUIClass(void * UBC);
 	void						setWirelessClass(void* DUST);
+
+	float						getEmgAvg(void);
+	int							getEmgHighCount(void);
 	// graph
 	DWORD						Run(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId);
 	// spine
@@ -55,7 +59,7 @@ private:
 
 	std::ofstream Logfile; // Log file
 	bool					f_dataSaved = false; // Logging Flag
-	
+	bool					f_dataEMGSaved = false;
 	//bool                    SetStatusMessage(_In_z_ WCHAR* szMessage, DWORD nShowTimeMsec, bool bForce);
 
 //Graph Private Functions
@@ -70,11 +74,27 @@ private:
 	HRESULT						EnsureDirect2DResourcesSpine();
 	std::array<std::array<std::deque<double>, 2>, 7> dataBufferSpine; //Array of 2 data points, one time one value	
 	std::tuple<int,int,int> SpineGetMap(int i);
+	double WristAccelAvg = 0;
+	double WristVeloAvg = 0;
+	void* EMGGUICLASS; // Pointer to the EMG GUI Class.
+// EMG sampling
+	double EMGHigh = 300;
+	double EMGLow = 244;
+	double EMGMaxAvg = 0;
+	float zone = 0.90f;
+	void		CheckEMGAverage(void);
+	void		CheckEMGHigh(double data);
+	void		CheckEMGLow(double data);
+	int emgHighCount = 5;
+	float emgAvg = 0;
+	int emgLowCount = 5;
+	mutable std::mutex MutexEmgCount;
 //Emg Private Functions & Variables
 	void						UpdateEMG(void);
 	void						DisplayEMG(void);
 	HRESULT						EnsureDirect2DResourcesEMG();
 	std::array<std::deque<double>, 2> dataBufferEMG; //  data time
+
 //Force Private Functions & Variables
 	void						UpdateForce(void);
 	void						DisplayForce(void);
@@ -83,12 +103,15 @@ private:
 	
 //Log functions
 	void						SaveSpineBuffer(void);
+	void						SaveEMGBuffer(void);
 	double						WristMin = 1000;
-	double						WristMax = 1000;
+	double						WristMax = 0;
 	int liftState = 0;
 	int LiftCount = 0;
 	void CheckLiftPos(void);
-// PoorForm Points
+// PoorForm Points / Spine Functions
+	double WristAccelAverage(void);
+	double WristVeloAverage(void);
 	int FormPoints = 0;
 	int HipsYVHipAngV(void);
 	int KneeAngVHipAngV(void);
@@ -107,7 +130,7 @@ enum _SpineDataType
 	SpineData_HipAngleVelo = 1,
 	SpineData_KneeAngle = 2,
 	SpineData_KneeAngleVelo = 3,
-	SpineData_HipsYVelo = 4,
+	SpineData_HipsYVelo = 4, // WristVello
 	SpineData_WristYAccel = 5,
 	SpineData_WristYPos = 6
 };
