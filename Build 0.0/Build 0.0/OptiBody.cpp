@@ -83,7 +83,7 @@ double dX, dY, dZ;
 		break;
 	case 2:
 		interval = (Joint[FrameCounters[2]].JointArray[JointType0].T - Joint[(!FrameCounters[2])].JointArray[JointType0].T);
-
+	
 		
 		dX = ((Joint[FrameCounters[2]].JointArray[JointType0].X - Joint[(!FrameCounters[2])].JointArray[JointType0].X) / interval);
 		Joint1Derivative[FrameCounters[3]].JointArray[JointType0].X = dX;

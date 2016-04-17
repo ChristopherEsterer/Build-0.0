@@ -482,6 +482,7 @@ void GUIApp::UpdateSpine(void)
 				dataBufferSpine[i][0].pop_front();
 				WristAccelAverage();
 				WristVeloAverage();
+				WristPosAverage();
 			}
 		}
 		SaveSpineBuffer();
@@ -510,24 +511,88 @@ void GUIApp::DisplaySpine(void)
 			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_SPINE), &rct);
 			int width = rct.right - 90;
 			int height = rct.bottom - 80;
+			
 
 			if (!dataBufferSpine[0][0].empty())
 			{
+				CheckLiftPos();
 			//	FormPoints = HipsYVHipAngV();
 			//	FormPoints = KneeAngVHipAngV();
 			//	FormPoints = KneeAngHipAng();
+				ID2D1Brush* BGBrush;
+				switch (BGState) {
+				case 1:
+					BGBrush = YellowGreen;
+					break;
+				case 0:
+					BGBrush = Black;
+					break;
+				case 2:
+					if (StrokeWarn = 1) { BGBrush = BGBrush = OrangeRed; }
+					else { BGBrush = Black; }
+					break;
+				}
 
+				ID2D1Brush* StrokeBrush;
+				switch (StrokeWarn) {
+				case 1:
+					StrokeBrush = OrangeRed;
+					break;
+				case 0:
+					StrokeBrush = YellowGreen;
+					break;
+				case 2:
+					StrokeBrush = White;
+					break;
+				}
 				GUIApp* TempEmg;
 				TempEmg = (GUIApp*)EMGGUICLASS;
+				D2D1_POINT_2F Point0;
+				D2D1_POINT_2F Point1;
+				//Blue bar on the left will show your lift stroke
+				Point0.x = (width / 4);
+				Point0.y = (height-30);
+				Point1.x = (width / 4);
+				Point1.y = (height-30)-(LiftStroke*8.0E1);
+				m_pRenderTarget->DrawLine(Point0, Point1, StrokeBrush, 30.0f);
+				// Bar on right is current lift
+				Point0.x = (width * 3/4);
+				Point0.y = (height - 30);
+				Point1.x = (width * 3/4);
+				Point1.y = (height - 30) - (CurrentLift*8.0E1);
+
+
+				ID2D1Brush* DotBrush;
+				switch (liftState) {
+				case 1://bot
+					DotBrush = m_pBrushGraphLine;
+					break;
+				case 2://up
+					DotBrush = m_pBrushGraphLine2;
+					break;
+				case 3://top
+					DotBrush = m_pBrushGraphLine3;
+					break;
+				case 4://down
+					DotBrush = m_pBrushGraphLine4;
+					break;
+				}
+				m_pRenderTarget->DrawLine(Point0, Point1, StrokeBrush, 30.0f);
+
+				Point0.x = (width / 2);
+				Point0.y = (height / 2);
+				D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, 45.0F, 45.0F);
+				m_pRenderTarget->FillEllipse(ellipse, DotBrush);
+				//1,2,3,4,1,
 				if (243 < abs(TempEmg->getEmgAvg()) && 250 > abs(TempEmg->getEmgAvg()) && 1.0E-8 > abs(WristVeloAvg)) {
-					D2D1_POINT_2F Point0;
+					
 					Point0.x = (width / 2);
 					Point0.y = (height / 2);
 					D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, 45.0F, 45.0F);
 					m_pRenderTarget->FillEllipse(ellipse, m_pBrushGraphLine2);
 				}
 
-				//CheckLiftPos();
+				
 				FormPoints = FormPoints+KneeAngV();
 			/*	if (liftState) { Brush = m_pBrushGraphLine; }
 				else { Brush = m_pBrushGraphLine5; }
@@ -590,12 +655,16 @@ HRESULT GUIApp::EnsureDirect2DResourcesSpine()
 			return hr;
 		}
 
-		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Blue, 0.5f), &m_pBrushGraphLine);
-		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 0.5f), &m_pBrushGraphLine2);
-		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 0.5f), &m_pBrushGraphLine3);
-		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Orange, 0.5f), &m_pBrushGraphLine4);
-		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red, 0.5f), &m_pBrushGraphLine5);
-
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::DodgerBlue, 0.7f), &m_pBrushGraphLine);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green, 0.7f), &m_pBrushGraphLine2);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 0.7f), &m_pBrushGraphLine3);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Orange, 0.7f), &m_pBrushGraphLine4);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red, 0.7f), &m_pBrushGraphLine5);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Purple, 0.7f), &Purple);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::OrangeRed, 0.8f), &OrangeRed);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::YellowGreen, 0.8f), &YellowGreen);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 1.0f), &White);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black, 1.0f), &Black);
 	}
 
 	return hr;
@@ -643,27 +712,82 @@ void GUIApp::SaveSpineBuffer(void)
 }
 void GUIApp::CheckLiftPos(void)
 {
-	if (dataBufferSpine[SpineData_WristYPos][0].back()  < WristMin && abs(WristVeloAvg) < 5.0E-9)
+	if (WristPosAvg  < WristMin && abs(WristVeloAvg) < 5.0E-9)
 	{
-		WristMin = dataBufferSpine[SpineData_WristYPos][0].back();
+		WristMin = WristPosAvg;
 	}	
-	if (dataBufferSpine[SpineData_WristYPos][0].back() > WristMax && abs(WristVeloAvg) < 5.0E-9) {
-		WristMax = dataBufferSpine[SpineData_WristYPos][0].back();
+	if (WristPosAvg > WristMax && abs(WristVeloAvg) < 5.0E-9) {
+		WristMax = WristPosAvg;
+	}
+	LiftStroke = WristMax - WristMin;
+	CurrentLift = WristPosAvg - WristMin;
+
+	if (CurrentLift > (LiftStroke*.75) &&  WristVeloAvg > 0 && abs(WristVeloAvg) < 5.0E-9) { // within 80% of top 
+		liftState = 3; // top
+	}
+	else if (CurrentLift < (LiftStroke*0.25) && abs(WristVeloAvg) < 5.0E-9) {
+		liftState = 1; // bottom
+	}
+	else if (CurrentLift < LiftStroke && WristPosAvg > WristMin && WristVeloAvg > 3.0E-8) {
+		liftState = 2; // upstroke
+	}
+	else if (CurrentLift < LiftStroke && WristPosAvg > WristMin && WristVeloAvg < -3.0E-8) {
+		liftState = 4; // downstroke
 	}
 
-
-	if (dataBufferSpine[SpineData_WristYPos][0].back() > (WristMax*.75) &&  WristVeloAvg > 0 && abs(WristVeloAvg) < 5.0E-9) { // within 80% of top 
-		liftState = 1; // top
+	if (liftStates.empty()){
+	liftStates.push_back(liftState);
 	}
-	else if (dataBufferSpine[SpineData_WristYPos][0].back() < (WristMin*1.25) && WristVeloAvg < 0 && abs(WristVeloAvg) < 5.0E-9) {
-	
-		if (liftState = 1)
-		{
-			liftState = 0; LiftCount++; FormPoints = 0;
+	else if (liftState != *(liftStates.end() - 1)) { // if the lift state changed
+	liftStates.push_back(liftState);
+	}
+
+	if (liftStates.size() > 2) {
+		if (liftStates.size() > 8) {
+			liftStates.pop_front();
 		}
-		else {
-			liftState = 0;
-		};
+		int* prev3State;
+		int* prev2State;
+		int* prevState = &*(liftStates.end()- 2);
+			switch (*prevState) { // we know last and current state, we should check order.
+			case 1: // was at bottom
+				if (liftState == 2) { // now should be going up
+					StrokeWarn = 0;
+				}
+				break;
+			case 2: // was up
+				if (liftState == 3) { // now should be at top
+					StrokeWarn = 0;
+				}
+				else if(liftState == 4) {					
+					liftStates.clear();
+					StrokeWarn = 1;
+					BGState = 2;
+				}
+				break;
+			case 3: // was top
+				if (liftState == 4) { // now should be going down
+					StrokeWarn = 0;
+				}
+				break;
+			case 4: // was down
+				if (liftState == 1) { // now should be at bottom
+					StrokeWarn = 0;
+					// if we are at the bottom then we could possibly be finished our lift stroke.
+					if (liftStates.size() >= 4) // 4123,4123
+					{
+						prev2State = &*(liftStates.end() - 3);
+						prev3State = &*(liftStates.end() - 4);
+						if (*prev2State == 3 && *prev3State == 2) 
+						{
+							StrokeWarn = 2;
+							LiftCount++;
+							//Beep(440, 500);
+						 }
+					}
+				}
+				break;
+			}
 	}
 	/*if (WristVeloAvg > 0) {
 		liftState = 0;
@@ -672,7 +796,10 @@ void GUIApp::CheckLiftPos(void)
 		liftState = 1;
 	}*/
 }
+void GUIApp::CheckEMGPos(void)
+{
 
+};
 int GUIApp::HipsYVHipAngV(void)
 {
 	if (dataBufferSpine[SpineData_HipsYVelo][0].back() > dataBufferSpine[SpineData_HipAngleVelo][0].back()) {
@@ -855,6 +982,16 @@ void GUIApp::UpdateEMG(void)
 			dataBufferEMG[1].pop_front();
 			dataBufferEMG[0].pop_front();
 			CheckEMGAverage();
+			if (dataBufferEMGAvg[0].size() < cDataBufferSize) {
+				dataBufferEMGAvg[0].push_back(getEmgAvg());
+				dataBufferEMGAvg[1].push_back(temptime - m_nStartTime);
+			}
+			else {
+				dataBufferEMGAvg[0].push_back(getEmgAvg());
+				dataBufferEMGAvg[1].push_back(temptime - m_nStartTime);
+				dataBufferEMGAvg[1].pop_front();
+				dataBufferEMGAvg[0].pop_front();
+			}
 		}
 		SaveEMGBuffer();
 		TempBody->setNewDataFlagEMG(FALSE);
@@ -893,17 +1030,32 @@ void GUIApp::DisplayEMG(void)
 					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
 				}
 			}
+
+			if (dataBufferEMGAvg[0].size() != 0) {
+				for (int i = 0; i < dataBufferEMGAvg[0].size() - 1; i++)
+				{
+					D2D1_POINT_2F PointTemp;
+					PointTemp.x = Mapto(dataBufferEMGAvg[1], width, 0, dataBufferEMGAvg[1][i]);
+					PointTemp.y = ((height) / 2) - MaptoYEMG(&dataBufferEMGAvg[0], &height, &Zero, &dataBufferEMGAvg[0][i]);
+					D2D1_POINT_2F PointTemp2;
+					PointTemp2.x = Mapto(dataBufferEMGAvg[1], width, 0, dataBufferEMGAvg[1][i + 1]);
+					PointTemp2.y = ((height) / 2) - MaptoYEMG(&dataBufferEMGAvg[0], &height, &Zero, &dataBufferEMGAvg[0][i + 1]);
+					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine5, c_GraphLineThickness);
+				}
+			}
 			D2D1_POINT_2F Point0;
 			D2D1_POINT_2F Point1;
-			Point0.x = 0;
-			Point0.y = height;
+			//Point0.x = 0;
+			//Point0.y = height;
+			//Point1.x = width;
+			//Point1.y = height;
+			//m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);
+			//Point0.x = 0;
+			double Emg244 = 244;
+			Point0.y = ((height) / 2) - MaptoYEMG(&dataBufferEMGAvg[0], &height, &Zero, &Emg244);
+			Point1.y = Point0.y;
 			Point1.x = width;
-			Point1.y = height;
-			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);
-			Point0.x = 0;
-			Point0.y = Point0.y / 2;
-			Point1.x = width;
-			Point1.y = Point1.y / 2;
+			Point0.x = width;
 			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine4, c_GraphLineThickness);
 		}
 		else {
@@ -958,7 +1110,10 @@ HRESULT GUIApp::EnsureDirect2DResourcesEMG()
 		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Blue, 0.5f), &m_pBrushGraphLine3);
 		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Purple, 0.5f), &m_pBrushGraphLine4);
 		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 0.5f), &m_pBrushGraphLine5);
-
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Purple, 0.5f), &Purple);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::OrangeRed, 0.5f), &OrangeRed);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::YellowGreen, 0.5f), &YellowGreen);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &White);
 	}
 
 	return hr;
@@ -1010,9 +1165,9 @@ void GUIApp::CheckEMGAverage(void)
 }
 double GUIApp::WristAccelAverage(void)
 {
-	double tAvg = 0;
+	float tAvg = 0;
 	int c = 0;
-	for (std::deque<double>::iterator it = ((dataBufferSpine[5][0].end()) - 20); it != dataBufferSpine[5][0].end(); ++it) {
+	for (std::deque<double>::iterator it = ((dataBufferSpine[SpineData_WristYAccel][0].end()) - 20); it != dataBufferSpine[SpineData_WristYAccel][0].end(); ++it) {
 		tAvg += *it;
 		c++;
 	}
@@ -1021,7 +1176,7 @@ double GUIApp::WristAccelAverage(void)
 }
 double GUIApp::WristVeloAverage(void)
 {
-	double tAvg = 0;
+	float tAvg = 0;
 	int c = 0;
 	for (std::deque<double>::iterator it = ((dataBufferSpine[4][0].end()) - 10); it != dataBufferSpine[4][0].end(); ++it) {
 		tAvg += *it;
@@ -1029,6 +1184,18 @@ double GUIApp::WristVeloAverage(void)
 	}
 	tAvg = tAvg / c;
 	WristVeloAvg = tAvg;
+	return tAvg;
+}
+double GUIApp::WristPosAverage(void)
+{
+	float tAvg = 0;
+	int c = 0;
+	for (std::deque<double>::iterator it = ((dataBufferSpine[SpineData_WristYPos][0].end()) - 5); it != dataBufferSpine[SpineData_WristYPos][0].end(); ++it) {
+		tAvg += *it;
+		c++;
+	}
+	tAvg = tAvg / c;
+	WristPosAvg = tAvg;
 	return tAvg;
 }
 // Run Force
@@ -1202,7 +1369,7 @@ void GUIApp::UpdateForce(void)
 	else {
 		Sleep(20); // Wait for a frame
 	}
-	//DisplayForce();
+	DisplayForce();
 	return;
 }
 void GUIApp::DisplayForce(void)
@@ -1226,21 +1393,26 @@ void GUIApp::DisplayForce(void)
 
 					D2D1_POINT_2F Point0;
 					double ForceDiff = (dataBufferForce[0].back() - dataBufferForce[1].back());
+
 					Point0.x = (width / 2) +ForceDiff;
 					Point0.y = (height / 2);
-					D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, 45.0F, 45.0F);
+					
 					
 					ID2D1SolidColorBrush* EllipseBrush;
 					if (abs(ForceDiff) > 20) {
+						ForceDiffCount++;
 						EllipseBrush = m_pBrushGraphLine;
 					}
 					else if (abs(ForceDiff) < 20) {
 						EllipseBrush = m_pBrushGraphLine5;
 					}
 					 if (abs(ForceDiff) < 10) {
+						 if(ForceDiffCount > -10){ ForceDiffCount--; }
 						EllipseBrush = m_pBrushGraphLine2;
 					}
-					
+					 float DotSize = 40.0f + ForceDiffCount;
+
+					 D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, DotSize, DotSize);
 						m_pRenderTarget->FillEllipse(ellipse, EllipseBrush);
 					
 					D2D1_POINT_2F Point1;
@@ -1332,7 +1504,10 @@ HRESULT GUIApp::EnsureDirect2DResourcesForce()
 		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Blue, 0.5f), &m_pBrushGraphLine3);
 		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Purple, 0.5f), &m_pBrushGraphLine4);
 		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 0.5f), &m_pBrushGraphLine5);
-
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Purple, 0.5f), &Purple);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::OrangeRed, 0.5f), &OrangeRed);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::YellowGreen, 0.5f), &YellowGreen);
+		m_pRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &White);
 	}
 
 	return hr;

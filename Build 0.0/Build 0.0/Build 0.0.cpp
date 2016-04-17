@@ -359,11 +359,7 @@ void StartGUI(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 
-}
-		
-
-	//GuiApp[0].Run(hInst, Show, hDlg, wmId);
-	
+}	
 	// this is where you save the ID to tell Build to remove the thread
 	//ToClose[] = std::this_thread::get_id());
 	

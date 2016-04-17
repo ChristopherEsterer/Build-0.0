@@ -16,7 +16,10 @@ private:
 
 	double StartTime;
 	bool FirstTime = true;
-
+	
+	double StartTimeForce;
+	bool FirstTimeForce = true;
+	
 	std::array<std::deque<double>,2> dataBufferEMG; // [0] Time [1]EMG 
 	std::array<std::deque<double>, 3> dataBufferForce; // [0] Time [1]ForceL [2]ForceR
 	std::ifstream DatafileEmg;

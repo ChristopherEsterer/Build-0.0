@@ -57,6 +57,11 @@ private:
 	ID2D1SolidColorBrush*   m_pBrushGraphLine4;
 	ID2D1SolidColorBrush*   m_pBrushGraphLine5;
 
+	ID2D1SolidColorBrush*   Purple;
+	ID2D1SolidColorBrush*   OrangeRed;
+	ID2D1SolidColorBrush*   YellowGreen;
+	ID2D1SolidColorBrush*   White;
+	ID2D1SolidColorBrush*   Black;
 	std::ofstream Logfile; // Log file
 	bool					f_dataSaved = false; // Logging Flag
 	bool					f_dataEMGSaved = false;
@@ -74,9 +79,28 @@ private:
 	HRESULT						EnsureDirect2DResourcesSpine();
 	std::array<std::array<std::deque<double>, 2>, 7> dataBufferSpine; //Array of 2 data points, one time one value	
 	std::tuple<int,int,int> SpineGetMap(int i);
-	double WristAccelAvg = 0;
-	double WristVeloAvg = 0;
+	float WristAccelAvg = 0;
+	float WristVeloAvg = 0;
+	float WristPosAvg = 0;
 	void* EMGGUICLASS; // Pointer to the EMG GUI Class.
+
+	float LiftStroke = 1; //
+	float CurrentLift = 0;//
+	int StrokeWarn = 0; //
+	float MaxHandAccel;
+	int LiftCount = 0;//
+	std::vector<float> LiftDuration;
+	int BGState = 0;//
+	float LiftDurationTotal;
+	int DisplayState = 0;
+	float	WristMin = 1000;
+	float	WristMax = 0;
+	int liftState = 1; //
+	void CheckLiftPos(void);
+	void CheckEMGPos(void); // ** to do
+	std::deque<int>liftStates;
+
+
 // EMG sampling
 	double EMGHigh = 300;
 	double EMGLow = 244;
@@ -94,24 +118,23 @@ private:
 	void						DisplayEMG(void);
 	HRESULT						EnsureDirect2DResourcesEMG();
 	std::array<std::deque<double>, 2> dataBufferEMG; //  data time
-
+	std::array<std::deque<double>, 2> dataBufferEMGAvg; // Avg time
 //Force Private Functions & Variables
 	void						UpdateForce(void);
 	void						DisplayForce(void);
 	HRESULT						EnsureDirect2DResourcesForce();
 	std::array<std::deque<double>, 3> dataBufferForce; // left right time 
-	
+	float BarbellMass;
+	float BodyMass;
+	int ForceDiffCount = 0;
 //Log functions
 	void						SaveSpineBuffer(void);
 	void						SaveEMGBuffer(void);
-	double						WristMin = 1000;
-	double						WristMax = 0;
-	int liftState = 0;
-	int LiftCount = 0;
-	void CheckLiftPos(void);
+
 // PoorForm Points / Spine Functions
 	double WristAccelAverage(void);
 	double WristVeloAverage(void);
+	double WristPosAverage(void);
 	int FormPoints = 0;
 	int HipsYVHipAngV(void);
 	int KneeAngVHipAngV(void);
