@@ -30,7 +30,7 @@ def timeStamped(fname, fmt='%H%M%sdk_version{fname}'):
 
 #=========================== Mac Addresses for each Sensor ====================
 mac1 = '00170d0000587c22'   
-mac2 = '00170d000058755a'   
+mac2 = '00170d000058755b'   
 
 #======================= Split String to Blocks of Four Hex ==================
 

@@ -11,6 +11,8 @@ static const float c_GraphLineThickness = 3.0f;
 static const float c_SpineLineThickness = 6.0f;
 static int C = 0;
 
+
+
 template<typename TYPE, typename TYPE2, typename TYPE3>
 TYPE2 Mapto(std::deque<TYPE> dataBuf, TYPE2 MAX, TYPE2 MIN, TYPE3 data)
 {
@@ -49,6 +51,19 @@ float MaptoYEMG(std::deque<double>*dataBuf, int* MAX, int* MIN, double* data)
 	double DataNorm = *data - DataMin;
 	//double T = (((PixleRange / DataRange) * data));
 	double T = ((PixleRange / 1000) * *data);
+	return (float)T;
+}
+float MaptoYForce(std::deque<double>*dataBuf, int* MAX, int* MIN, double* data)
+{
+	//double DataMax = *std::max_element(dataBuf->begin(), dataBuf->end());
+	//double DataMin = *std::min_element(dataBuf->begin(), dataBuf->end());
+	//double DataRange = (DataMax - DataMin);
+	//double ScaleFactor;
+	double PixleRange = (*MAX - *MIN);
+	//if (DataRange == 0) { return 0; }
+	double DataNorm = *data - 10300;
+	//double T = (((PixleRange / DataRange) * data));
+	double T = ((PixleRange / 700) * DataNorm);
 	return (float)T;
 }
 GUIApp::GUIApp() :
@@ -690,6 +705,8 @@ std::tuple<int,int,int> GUIApp::SpineGetMap(int i)
 
 	
 }
+
+
 void GUIApp::SaveSpineBuffer(void)
 {
 	
@@ -1198,7 +1215,58 @@ double GUIApp::WristPosAverage(void)
 	WristPosAvg = tAvg;
 	return tAvg;
 }
+double GUIApp::ForceDataLAverage(void)
+{
+	float tAvg = 0;
+	int c = 0;
+	for (std::deque<double>::iterator it = ((dataBufferForce[0].end()) - 25); it != dataBufferForce[0].end(); ++it) {
+		tAvg += *it;
+		c++;
+	}
+	tAvg = tAvg / c;
+	WristPosAvg = tAvg;
+	return tAvg;
+}
+double GUIApp::ForceDataRAverage(void)
+{
+	float tAvg = 0;
+	int c = 0;
+	for (std::deque<double>::iterator it = ((dataBufferForce[1].end()) - 25); it != dataBufferForce[1].end(); ++it) {
+		tAvg += *it;
+		c++;
+	}
+	tAvg = tAvg / c;
+	WristPosAvg = tAvg;
+	return tAvg;
+}
+double GUIApp::ForceDiffAverage(void)
+{
+	float tAvg = 0;
+	int c = 0;
+	for (int i = dataBufferForce[0].size() - 10; i < dataBufferForce[0].size(); i++) {
+		tAvg += (dataBufferForce[0][i] - dataBufferForce[1][i]);
+		c++;
+	}
+	tAvg = tAvg / c;
+	WristPosAvg = tAvg;
+	return tAvg;
+}
 // Run Force
+void GUIApp::SaveForceBuffer(void)
+{
+
+	Logfile.open("logForce.csv", std::ios_base::app);
+	if (Logfile.is_open())
+	{
+		double t0,t1, tt;
+		tt = dataBufferForce[2].back();
+		t0 = dataBufferForce[0].back();
+		t1 = dataBufferForce[1].back();
+		Logfile << tt << "," << t0 << "," << t1 << ",\n";
+		Logfile.close();
+		f_dataForceSaved = true;
+	}
+}
 DWORD GUIApp::RunForce(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 {
 
@@ -1239,6 +1307,7 @@ DWORD GUIApp::RunForce(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 		return 0;
 	}
 
+	
 	// Create main application window
 	/* HWND hWndApp = CreateDialogParamW(
 	NULL,
@@ -1252,15 +1321,20 @@ DWORD GUIApp::RunForce(HINSTANCE hInstance, int nCmdShow, HWND hDlg, int wmId)
 		hDlg,
 		(DLGPROC)GUIApp::MessageRouter,
 		reinterpret_cast<LPARAM>(this));
-
-
+	
+	// ** Run GetMass
+	
+	//ShowWindow(MassWnd, nCmdShow);
 	DWORD TEMPE = GetLastError();
 	// Show window
 	ShowWindow(hWndApp, nCmdShow);
-
+	
+	//DialogBox(hInstance, MAKEINTRESOURCE(IDD_GETMASS), hWndApp, (DLGPROC)GetMass);
+	
 	// Main message loop
 	while (WM_QUIT != msg.message)
 	{
+
 		UpdateForce();
 		
 		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
@@ -1344,6 +1418,21 @@ void GUIApp::UpdateForce(void)
 			dataBufferForce[0].push_back(tempDataL);
 			dataBufferForce[1].push_back(tempDataR);
 			dataBufferForce[2].push_back(temptime - m_nStartTime);
+
+			if(EMGOffSets.size() < 30){
+				EMGOffSets.push_back(tempDataR - tempDataL);
+			}
+			else {
+				float tAvg = 0;
+				int c = 0;
+				for (std::deque<double>::iterator it = ((EMGOffSets.end()) - 29); it != EMGOffSets.end(); ++it) {
+					tAvg += *it;
+					c++;
+				}
+				tAvg = tAvg / c;
+				//WristPosAvg = tAvg;
+				ForceOffset = tAvg;
+			}
 		}
 		else
 		{
@@ -1356,14 +1445,45 @@ void GUIApp::UpdateForce(void)
 				temptime = TempBody->getData(ForceTime_itr);
 		//	} while (tempDataL == 0 || temptime == -INFINITY);
 
-			dataBufferForce[0].push_back(tempDataL);
+			dataBufferForce[0].push_back(tempDataL + ForceOffset);
 			dataBufferForce[1].push_back(tempDataR);
 			dataBufferForce[2].push_back(temptime - m_nStartTime);
 			
 			dataBufferForce[2].pop_front();
 			dataBufferForce[1].pop_front();
 			dataBufferForce[0].pop_front();
+
+			if (dataBufferForceAvg[0].size() < cDataBufferSize) {
+				dataBufferForceAvg[0].push_back(ForceDataLAverage());
+				dataBufferForceAvg[1].push_back(ForceDataRAverage());
+			//	if (EMGOffset == 0) {
+			//		EMGOffset = dataBufferForceAvg[1].back() - dataBufferForceAvg[0].back();
+			//	}
+				
+				dataBufferForceAvg[2].push_back(temptime - m_nStartTime);
+			}
+			else {
+				dataBufferForceAvg[0].push_back(ForceDataLAverage());
+				dataBufferForceAvg[1].push_back(ForceDataRAverage());
+				dataBufferForceAvg[2].push_back(temptime - m_nStartTime);
+				dataBufferForceAvg[1].pop_front();
+				dataBufferForceAvg[2].pop_front();
+				dataBufferForceAvg[0].pop_front();
+			}
+
+			/*if (dataBufferForceDiffAvg[0].size() < cDataBufferSize) {
+				dataBufferForceDiffAvg[0].push_back(ForceDiffAverage());
+				dataBufferForceDiffAvg[1].push_back(temptime - m_nStartTime);
+			}
+			else {
+				dataBufferForceDiffAvg[0].push_back(ForceDiffAverage());
+				dataBufferForceDiffAvg[1].push_back(temptime - m_nStartTime);
+				dataBufferForceDiffAvg[1].pop_front();
+				dataBufferForceDiffAvg[0].pop_front();
+			}*/
 		}
+
+		SaveForceBuffer();
 		TempBody->setNewDataFlagForce(FALSE);
 	}
 	else {
@@ -1374,6 +1494,104 @@ void GUIApp::UpdateForce(void)
 }
 void GUIApp::DisplayForce(void)
 {
+	//if (m_hWnd)
+	//{
+	//	HRESULT hr = EnsureDirect2DResourcesForce();
+
+	//	if (SUCCEEDED(hr) && m_pRenderTarget)
+	//	{
+	//		m_pRenderTarget->BeginDraw();
+	//		m_pRenderTarget->Clear();
+
+	//		RECT rct;
+	//		GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_FORCE), &rct);
+	//		int width = rct.right-80;
+	//		int height = rct.bottom-75;
+	//		if (dataBufferForceAvg[0].size() != 0) {
+	//			//for (int i = 0; i < dataBuffer[0].size() - 1; i++)
+	//		//	{
+
+	//				D2D1_POINT_2F Point0;
+	//				double ForceDiff = (dataBufferForceAvg[0].back() - dataBufferForceAvg[1].back() + (int)ForceOffset);
+
+	//				Point0.x = (width / 2) +ForceDiff;
+	//				Point0.y = (height / 2);
+	//				
+	//				
+	//				ID2D1SolidColorBrush* EllipseBrush;
+	//				if (abs(ForceDiff) > 50) {
+	//					ForceDiffCount++;
+	//					EllipseBrush = m_pBrushGraphLine;
+	//				}
+	//				else if (abs(ForceDiff) < 50) {
+	//					EllipseBrush = m_pBrushGraphLine5;
+	//				}
+	//				 if (abs(ForceDiff) < 10) {
+	//					 if(ForceDiffCount > -10){ ForceDiffCount--; }
+	//					EllipseBrush = m_pBrushGraphLine2;
+	//				}
+	//				 float DotSize = 40.0f + ForceDiffCount;
+
+	//				 D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, DotSize, DotSize);
+	//				m_pRenderTarget->FillEllipse(ellipse, EllipseBrush);
+	//				
+	//				D2D1_POINT_2F Point1;
+	//				Point0.x = width/2;
+	//				Point0.y = 0;
+	//				Point1.x = width/2;
+	//				Point1.y = height;
+	//				m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine3, c_GraphLineThickness);
+
+	//				/*D2D1_POINT_2F PointTemp;
+	//				PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
+	//				PointTemp.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
+	//				D2D1_POINT_2F PointTemp2;
+	//				PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i + 1]);
+	//				PointTemp2.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]);
+	//				m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);*/
+	//			//}
+	//		}
+	//		/* if (dataBufferForce[0].size() != 0) {
+	//			int Zero = 0;
+	//			for (int i = 0; i < dataBufferForce[0].size() - 1; i++)
+	//			{
+	//				D2D1_POINT_2F PointTemp;
+	//				PointTemp.x = Mapto(dataBufferForce[1], width, 0, dataBufferForce[1][i]);
+	//				PointTemp.y = ((height) / 4) - MaptoYForce(&dataBufferForce[0], &height, &Zero, &dataBufferForce[0][i]);
+	//				D2D1_POINT_2F PointTemp2;
+	//				PointTemp2.x = Mapto(dataBufferForce[1], width, 0, dataBufferEMG[1][i + 1]);
+	//				PointTemp2.y = ((height) / 4) - MaptoYForce(&dataBufferForce[0], &height, &Zero, &dataBufferForce[0][i + 1]);
+	//				m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);
+	//			}
+	//		} */
+	//		D2D1_POINT_2F Point0;
+	//		D2D1_POINT_2F Point1;
+	//		Point0.x = width / 2;
+	//		Point0.y = 0;
+	//		Point1.x = width / 2;
+	//		Point1.y = height;
+	//		m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine3, c_GraphLineThickness);
+	//	
+	//	/*	D2D1_POINT_2F Point0;
+	//		D2D1_POINT_2F Point1;
+	//		Point0.x = 0;
+	//		Point0.y = height - 80;
+	//		Point1.x = width;
+	//		Point1.y = height - 80;
+	//		m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);*/
+	//	//	Point0.x = 0;
+	//	//	Point0.y = Point0.y / 2;
+	//	//	Point1.x = width;
+	//	//	Point1.y = Point1.y / 2;
+	//	//	m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine4, c_GraphLineThickness);
+	//	}
+	//	else {
+	//		Sleep(1);
+	//	}
+
+	//	hr = m_pRenderTarget->EndDraw();
+	//}
+
 	if (m_hWnd)
 	{
 		HRESULT hr = EnsureDirect2DResourcesForce();
@@ -1385,75 +1603,60 @@ void GUIApp::DisplayForce(void)
 
 			RECT rct;
 			GetClientRect(GetDlgItem(m_hWnd, IDC_GRAPH_FORCE), &rct);
-			int width = rct.right-80;
-			int height = rct.bottom-75;
-			if (dataBufferForce[0].size() != 0) {
-				//for (int i = 0; i < dataBuffer[0].size() - 1; i++)
-			//	{
-
-					D2D1_POINT_2F Point0;
-					double ForceDiff = (dataBufferForce[0].back() - dataBufferForce[1].back());
-
-					Point0.x = (width / 2) +ForceDiff;
-					Point0.y = (height / 2);
-					
-					
-					ID2D1SolidColorBrush* EllipseBrush;
-					if (abs(ForceDiff) > 20) {
-						ForceDiffCount++;
-						EllipseBrush = m_pBrushGraphLine;
-					}
-					else if (abs(ForceDiff) < 20) {
-						EllipseBrush = m_pBrushGraphLine5;
-					}
-					 if (abs(ForceDiff) < 10) {
-						 if(ForceDiffCount > -10){ ForceDiffCount--; }
-						EllipseBrush = m_pBrushGraphLine2;
-					}
-					 float DotSize = 40.0f + ForceDiffCount;
-
-					 D2D1_ELLIPSE ellipse = D2D1::Ellipse(Point0, DotSize, DotSize);
-						m_pRenderTarget->FillEllipse(ellipse, EllipseBrush);
-					
-					D2D1_POINT_2F Point1;
-					Point0.x = width/2;
-					Point0.y = 0;
-					Point1.x = width/2;
-					Point1.y = height;
-					m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine3, c_GraphLineThickness);
-
-					/*D2D1_POINT_2F PointTemp;
-					PointTemp.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i]);
-					PointTemp.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i]);
+			int width = rct.right - 80;
+			int height = rct.bottom - 75;
+			int Zero = 0;
+			if (dataBufferForceAvg[0].size() != 0) {
+				for (int i = 0; i < dataBufferForceAvg[0].size() - 1; i++)
+				{
+					D2D1_POINT_2F PointTemp;
+					PointTemp.x = Mapto(dataBufferForceAvg[2], width, 0, dataBufferForceAvg[2][i]);
+					PointTemp.y = ((height) / 2) - MaptoYForce(&dataBufferForceAvg[0], &height, &Zero, &dataBufferForceAvg[0][i]);
 					D2D1_POINT_2F PointTemp2;
-					PointTemp2.x = Mapto(dataBuffer[1], width, 0, dataBuffer[1][i + 1]);
-					PointTemp2.y = ((height - 80) / 2) - MaptoY(dataBuffer[0], (height - 80), 0, dataBuffer[0][i + 1]);
-					m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine, c_GraphLineThickness);*/
-				//}
+					PointTemp2.x = Mapto(dataBufferForceAvg[2], width, 0, dataBufferForceAvg[2][i + 1]);
+					PointTemp2.y = ((height) / 2) - MaptoYForce(&dataBufferForceAvg[0], &height, &Zero, &dataBufferForceAvg[0][i + 1]);
+					m_pRenderTarget->DrawLine(PointTemp2, PointTemp, m_pBrushGraphLine, c_GraphLineThickness);
+
+					//D2D1_POINT_2F PointTemp;
+					PointTemp.x = Mapto(dataBufferForceAvg[2], width, 0, dataBufferForceAvg[2][i]);
+					PointTemp.y = ((height) / 2) - MaptoYForce(&dataBufferForceAvg[1], &height, &Zero, &dataBufferForceAvg[1][i]);
+					//D2D1_POINT_2F PointTemp2;
+					PointTemp2.x = Mapto(dataBufferForceAvg[2], width, 0, dataBufferForceAvg[2][i + 1]);
+					PointTemp2.y = ((height) / 2) - MaptoYForce(&dataBufferForceAvg[1], &height, &Zero, &dataBufferForceAvg[1][i + 1]);
+					m_pRenderTarget->DrawLine(PointTemp2, PointTemp, m_pBrushGraphLine3, c_GraphLineThickness);
+				}
+
 			}
+
+			//if (dataBufferEMGAvg[0].size() != 0) {
+			//	for (int i = 0; i < dataBufferEMGAvg[0].size() - 1; i++)
+			//	{
+			//		D2D1_POINT_2F PointTemp;
+			//		PointTemp.x = Mapto(dataBufferEMGAvg[1], width, 0, dataBufferEMGAvg[1][i]);
+			//		PointTemp.y = ((height) / 2) - MaptoYEMG(&dataBufferEMGAvg[0], &height, &Zero, &dataBufferEMGAvg[0][i]);
+			//		D2D1_POINT_2F PointTemp2;
+			//		PointTemp2.x = Mapto(dataBufferEMGAvg[1], width, 0, dataBufferEMGAvg[1][i + 1]);
+			//		PointTemp2.y = ((height) / 2) - MaptoYEMG(&dataBufferEMGAvg[0], &height, &Zero, &dataBufferEMGAvg[0][i + 1]);
+			//		m_pRenderTarget->DrawLine(PointTemp, PointTemp2, m_pBrushGraphLine5, c_GraphLineThickness);
+			//	}
+			//}
 			D2D1_POINT_2F Point0;
 			D2D1_POINT_2F Point1;
-			Point0.x = width / 2;
-			Point0.y = 0;
-			Point1.x = width / 2;
-			Point1.y = height;
-			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine3, c_GraphLineThickness);
-		
-		/*	D2D1_POINT_2F Point0;
-			D2D1_POINT_2F Point1;
-			Point0.x = 0;
-			Point0.y = height - 80;
-			Point1.x = width;
-			Point1.y = height - 80;
-			m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);*/
-		//	Point0.x = 0;
-		//	Point0.y = Point0.y / 2;
-		//	Point1.x = width;
-		//	Point1.y = Point1.y / 2;
-		//	m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine4, c_GraphLineThickness);
+			//Point0.x = 0;
+			//Point0.y = height;
+			//Point1.x = width;
+			//Point1.y = height;
+			//m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine5, c_GraphLineThickness);
+			//Point0.x = 0;
+			//double Emg244 = 244;
+			//Point0.y = ((height) / 2) - MaptoYEMG(&dataBufferEMGAvg[0], &height, &Zero, &Emg244);
+			//Point1.y = Point0.y;
+			//Point1.x = width;
+			//Point0.x = width;
+			//m_pRenderTarget->DrawLine(Point0, Point1, m_pBrushGraphLine4, c_GraphLineThickness);
 		}
 		else {
-			Sleep(1);
+
 		}
 
 		hr = m_pRenderTarget->EndDraw();
@@ -1658,4 +1861,27 @@ void GUIApp::DiscardDirect2DResources()
 	//SafeRelease(m_pBrushHandLasso);
 }
 
+INT_PTR CALLBACK GUIApp::GetMass(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+
+	UNREFERENCED_PARAMETER(lParam);
+	switch (message)
+	{
+	case WM_INITDIALOG:
+
+		return (INT_PTR)TRUE;
+
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDOK_GM || LOWORD(wParam) == IDCANCEL)
+		{
+			std::string MassString;
+			GetDlgItemText(hDlg, IDC_USERMASS,(LPWSTR) &MassString, 10);
+			EndDialog(hDlg, LOWORD(wParam));
+			return (INT_PTR)TRUE;
+		}
+
+		break;
+	}
+	return (INT_PTR)FALSE;
+}
 

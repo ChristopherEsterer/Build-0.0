@@ -60,9 +60,9 @@ void Wireless::GetLineEMG()
 
 void Wireless::GetLineForce()
 {
-	do {
+	//do {
 		DatafileForce.open("Force_Datafile.txt", std::ifstream::in);
-	} while (!DatafileForce.is_open());
+	//} while (!DatafileForce.is_open());
 
 	if (DatafileForce.is_open()) {
 		std::string line1;
@@ -112,24 +112,6 @@ void Wireless::GetLineForce()
 				line2.erase(0, pos + delimiter.length());
 			}
 
-			//std::getline(DatafileForce, line1);
-			//std::getline(DatafileForce, line2);
-
-			//		DatafileForce.close();
-
-			/*pos = line1.find(delimiter);
-
-			ttime = std::stod(line1.substr(0, pos));
-			line1.erase(0, pos + delimiter.length());
-			pos = line1.find(delimiter);
-			tfL = std::stod(line1.substr(0, pos));
-			line1.erase(0, pos + delimiter.length());
-
-			pos = line2.find(delimiter);
-			line2.erase(0, pos + delimiter.length());
-			pos = line2.find(delimiter);
-			tfR = std::stod(line2.substr(0, pos));
-			line2.erase(0, pos + delimiter.length()); */
 			if (FirstTimeForce) { StartTimeForce = ttime; FirstTimeForce = false;
 			}
 			if (ttime >= StartTimeForce) {
@@ -141,10 +123,8 @@ void Wireless::GetLineForce()
 				ForceDataMutex.unlock();
 			}
 		}
-		DatafileForce.close();
-		
+		DatafileForce.close();	
 	}
-//	DatafileForce.close();
 	return;
 }
 

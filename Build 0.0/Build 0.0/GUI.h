@@ -65,6 +65,7 @@ private:
 	std::ofstream Logfile; // Log file
 	bool					f_dataSaved = false; // Logging Flag
 	bool					f_dataEMGSaved = false;
+	bool					f_dataForceSaved = false;
 	//bool                    SetStatusMessage(_In_z_ WCHAR* szMessage, DWORD nShowTimeMsec, bool bForce);
 
 //Graph Private Functions
@@ -127,11 +128,21 @@ private:
 	float BarbellMass;
 	float BodyMass;
 	int ForceDiffCount = 0;
+	std::array<std::deque<double>, 3> dataBufferForceAvg;
+	std::array<std::deque<double>, 2> dataBufferForceDiffAvg;
+	INT_PTR CALLBACK GetMass(HWND, UINT, WPARAM, LPARAM);
+	double ForceOffset = 0;
+	std::deque<double> EMGOffSets;
+	double ForceDataMin = 10000;
 //Log functions
+	void						SaveForceBuffer(void);
 	void						SaveSpineBuffer(void);
 	void						SaveEMGBuffer(void);
 
 // PoorForm Points / Spine Functions
+	double ForceDiffAverage(void);
+	double ForceDataLAverage(void);
+	double ForceDataRAverage(void);
 	double WristAccelAverage(void);
 	double WristVeloAverage(void);
 	double WristPosAverage(void);
