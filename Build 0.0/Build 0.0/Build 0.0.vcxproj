@@ -94,9 +94,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kinect20.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glut32.lib;kinect20.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TypeLibraryResourceID>15680</TypeLibraryResourceID>
-      <AdditionalLibraryDirectories>\VC\PlatformSDK\Include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>\VC\PlatformSDK\Include;%KINECTSDK20_DIR%inc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -119,12 +119,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>SDK Path\Include;%KINECTSDK20_DIR%inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>\VC\PlatformSDK\Include;%KINECTSDK20_DIR%Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glut32.lib;kinect20.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -147,17 +150,22 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AppManager.h" />
     <ClInclude Include="BodyBasics.h" />
     <ClInclude Include="Build 0.0.h" />
+    <ClInclude Include="GUI.h" />
     <ClInclude Include="OptiBody.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="resourcek.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Wireless.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AppManager.cpp" />
     <ClCompile Include="BodyBasics.cpp" />
     <ClCompile Include="Build 0.0.cpp" />
+    <ClCompile Include="GUI.cpp" />
     <ClCompile Include="OptiBody.cpp" />
     <ClCompile Include="OptiBodyStructs.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -166,12 +174,20 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Wireless.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Build 0.0.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="app.ico" />
+    <Image Include="bitmap1.bmp" />
     <Image Include="Build 0.0.ico" />
+    <Image Include="icon1.ico" />
+    <Image Include="Logo.png" />
+    <Image Include="LogoCopy.bmp" />
+    <Image Include="LogoSmall.bmp" />
+    <Image Include="OarmoIcon.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
